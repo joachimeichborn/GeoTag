@@ -1,0 +1,90 @@
+/*
+GeoTag
+
+Copyright (C) 2015  Joachim von Eichborn
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package joachimeichborn.geotag.model;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+public class PicturesRepo implements PropertyChangeListener {
+	public static final String PICTURES_PROPERTY = "pictures";
+	private static final PicturesRepo INSTANCE = new PicturesRepo();
+	private static final Logger logger = Logger.getLogger(PicturesRepo.class.getSimpleName());
+
+	private final Map<String, Picture> pictures;
+	private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+
+	private PicturesRepo() {
+		pictures = Collections.synchronizedMap(new LinkedHashMap<>());
+	}
+
+	public static PicturesRepo getInstance() {
+		return INSTANCE;
+	}
+
+	public void addPicture(final Picture aPicture) {
+		logger.fine("Adding " + aPicture.getFile() + " to picture storage");
+		synchronized (pictures) {
+			pictures.put(aPicture.getFile().toString(), aPicture);
+		}
+		propertyChangeSupport.firePropertyChange(PICTURES_PROPERTY, null, null);
+	}
+
+	public void removePictures(final List<Picture> aPicturesToRemove) {
+		logger.fine("Removing " + aPicturesToRemove + " pictures from picture storage");
+		for (final Picture picture : aPicturesToRemove) {
+			final Picture removedPicture;
+			synchronized(pictures) {
+				removedPicture = pictures.remove(picture.getFile().toString());
+			}
+			if (removedPicture == null) {
+				logger.fine("Could not remove picture " + picture);
+			}
+		}
+		propertyChangeSupport.firePropertyChange(PICTURES_PROPERTY, null, null);
+	}
+
+	public List<Picture> getPictures() {
+		final List<Picture> pictureList = new LinkedList<>();
+		synchronized (pictures) {
+			pictureList.addAll(pictures.values());
+		}
+		return pictureList;
+	}
+
+	@Override
+	public void propertyChange(final PropertyChangeEvent aEvent) {
+		propertyChangeSupport.firePropertyChange(aEvent.getPropertyName(), aEvent.getOldValue(), aEvent.getNewValue());
+	}
+
+	public void addPropertyChangeListener(final String aPropertyName, final PropertyChangeListener aListener) {
+		propertyChangeSupport.addPropertyChangeListener(aPropertyName, aListener);
+	}
+
+	public void removePropertyChangeListener(final PropertyChangeListener aListener) {
+		propertyChangeSupport.removePropertyChangeListener(aListener);
+	}
+}

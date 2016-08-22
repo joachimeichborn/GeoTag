@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns3:kml xmlns:xal="urn:oasis:names:tc:ciq:xsdschema:xAL:2.0" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:ns3="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<ns3:Document>
+<ns3:name>Susdal</ns3:name>
+<ns3:open>1</ns3:open>
+<ns3:Style id="PathStyle"><ns3:LineStyle><ns3:color>ff0000ff</ns3:color><ns3:width>2.0</ns3:width></ns3:LineStyle></ns3:Style>
+<ns3:Style id="AccuracyStyle"><ns3:LineStyle><ns3:color>ff55ff7f</ns3:color><ns3:width>2.0</ns3:width></ns3:LineStyle></ns3:Style>
+<ns3:Style id="PinStyle"><ns3:LabelStyle><ns3:color>00ffffff</ns3:color><ns3:scale>0.0</ns3:scale></ns3:LabelStyle><ns3:IconStyle><ns3:color>ff14e7ff</ns3:color></ns3:IconStyle></ns3:Style>
+<ns3:Folder>
+<ns3:name>Positions</ns3:name>
+<ns3:open>0</ns3:open>
+<ns3:Placemark>
+<ns3:name>fused1</ns3:name>
+<ns3:description>8.0</ns3:description>
+<ns3:TimeStamp>
+<ns3:when>2015-07-27T20:08:07+03:00</ns3:when></ns3:TimeStamp>
+<ns3:styleUrl>#PinStyle</ns3:styleUrl>
+<ns3:Point>
+<ns3:coordinates>40.4483229,56.4191662,129.0</ns3:coordinates>
+</ns3:Point>
+</ns3:Placemark>
+<ns3:Placemark>
+<ns3:name>fused2</ns3:name>
+<ns3:description>15.0</ns3:description>
+<ns3:TimeStamp>
+<ns3:when>2015-07-27T20:08:36+03:00</ns3:when></ns3:TimeStamp>
+<ns3:styleUrl>#PinStyle</ns3:styleUrl>
+<ns3:Point>
+<ns3:coordinates>40.4483077,56.4193077,138.0</ns3:coordinates>
+</ns3:Point>
+</ns3:Placemark>
+<ns3:Placemark>
+<ns3:name>fused3</ns3:name>
+<ns3:description>17.0</ns3:description>
+<ns3:TimeStamp>
+<ns3:when>2015-07-27T20:09:06+03:00</ns3:when></ns3:TimeStamp>
+<ns3:styleUrl>#PinStyle</ns3:styleUrl>
+<ns3:Point>
+<ns3:coordinates>40.4483176,56.4193075,131.0</ns3:coordinates>
+</ns3:Point>
+</ns3:Placemark>
+</ns3:Folder>
+<ns3:Placemark>
+<ns3:name>Path</ns3:name>
+<ns3:styleUrl>#PathStyle</ns3:styleUrl>
+<ns3:LineString>
+<ns3:tessellate>1</ns3:tessellate>
+<ns3:coordinates>40.4483229,56.4191662 40.4483077,56.4193077 40.4483176,56.4193075</ns3:coordinates>
+</ns3:LineString>
+</ns3:Placemark>
+<ns3:Folder>
+<ns3:name>Accuracies</ns3:name>
+<ns3:open>0</ns3:open>
+<ns3:Placemark>
+<ns3:name>8.0</ns3:name>
+<ns3:TimeStamp>
+<ns3:when>2015-07-27T20:08:07+03:00</ns3:when></ns3:TimeStamp>
+<ns3:styleUrl>#AccuracyStyle</ns3:styleUrl>
+<ns3:LineString>
+<ns3:tessellate>1</ns3:tessellate>
+<ns3:coordinates>40.44845297422013,56.4191662 40.44844172875435,56.419195462969455 40.44840993667272,56.41921966611089 40.44836309509987,56.41923462446841 40.448309303393756,56.419237751594395 40.44825786267688,56.41922850677752 40.448217667556094,56.41920848853859 40.448195668138055,56.4191811582264 40.44819566828927,56.4191512415103 40.44821766793468,56.41912391126227 40.44825786310299,56.41910389312042 40.44830930368957,56.4190946483899 40.44836309518924,56.419097775560644 40.44840993661088,56.41911273391925 40.44844172867159,56.4191369370413 40.44845297422013,56.4191662</ns3:coordinates>
+</ns3:LineString>
+</ns3:Placemark>
+<ns3:Placemark>
+<ns3:name>15.0</ns3:name>
+<ns3:TimeStamp>
+<ns3:when>2015-07-27T20:08:36+03:00</ns3:when></ns3:TimeStamp>
+<ns3:styleUrl>#AccuracyStyle</ns3:styleUrl>
+<ns3:LineString>
+<ns3:tessellate>1</ns3:tessellate>
+<ns3:coordinates>40.44855159007,56.4193077 40.44853050481109,56.419362568076544 40.44847089441913,56.41940794898263 40.44838306601929,56.4194359959021 40.44828220602579,56.419441859226595 40.44818575421598,56.41942452512413 40.44811038812315,56.41938699084647 40.4480691392474,56.41933574645852 40.44806913977901,56.41927965261581 40.448110389454094,56.419228408453364 40.44818575571403,56.41919087451705 40.448282207065766,56.41917354071815 40.44838306633348,56.41917940420003 40.44847089420171,56.419207451123256 40.44853050452012,56.41925283196124 40.44855159007,56.4193077</ns3:coordinates>
+</ns3:LineString>
+</ns3:Placemark>
+<ns3:Placemark>
+<ns3:name>17.0</ns3:name>
+<ns3:TimeStamp>
+<ns3:when>2015-07-27T20:09:06+03:00</ns3:when></ns3:TimeStamp>
+<ns3:styleUrl>#AccuracyStyle</ns3:styleUrl>
+<ns3:LineString>
+<ns3:tessellate>1</ns3:tessellate>
+<ns3:coordinates>40.44859400874453,56.41930750000001 40.44857011213988,56.41936968382295 40.44850255369046,56.419421115521665 40.44840301479766,56.41945290203012 40.44828870675079,56.419459547119324 40.448179394665644,56.419439901780265 40.44809397977352,56.41939736290647 40.44804723110831,56.41933928591642 40.44804723179113,56.41927571289468 40.44809398148304,56.41921763619428 40.448179396589815,56.41917509775892 40.4482887080866,56.419155452809775 40.44840301520124,56.419162098101104 40.448502553411195,56.41919388461439 40.44857011176616,56.419245316225584 40.44859400874453,56.41930750000001</ns3:coordinates>
+</ns3:LineString>
+</ns3:Placemark>
+</ns3:Folder>
+</ns3:Document>
+</ns3:kml>

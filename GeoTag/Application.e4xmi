@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application:Application xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:advanced="http://www.eclipse.org/ui/2010/UIModel/application/ui/advanced" xmlns:application="http://www.eclipse.org/ui/2010/UIModel/application" xmlns:basic="http://www.eclipse.org/ui/2010/UIModel/application/ui/basic" xmlns:menu="http://www.eclipse.org/ui/2010/UIModel/application/ui/menu" xmi:id="_c3AF0MjYEeSyMNYR5xypkQ" elementId="org.eclipse.e4.ide.application" bindingContexts="_c3AF2cjYEeSyMNYR5xypkQ">
+  <children xsi:type="basic:TrimmedWindow" xmi:id="_c3AF0cjYEeSyMNYR5xypkQ" elementId="main" label="GeoTag" iconURI="platform:/plugin/GeoTag/icons/geotag_32.png" width="1400" height="800">
+    <children xsi:type="advanced:PerspectiveStack" xmi:id="_bNOmwEjsEeWPCpDMyDviYg" elementId="geotag.perspectivestack.0" accessibilityPhrase="">
+      <children xsi:type="advanced:Perspective" xmi:id="_tiaOUEjsEeWPCpDMyDviYg" elementId="geotag.perspective.geotagging" label="Geotagging">
+        <children xsi:type="basic:PartSashContainer" xmi:id="_y7AqsEjsEeWPCpDMyDviYg" elementId="geotag.partsashcontainer.0" containerData="" horizontal="true">
+          <children xsi:type="basic:PartStack" xmi:id="_1JNnoEjsEeWPCpDMyDviYg" elementId="geotag.partstack.0" containerData="3000">
+            <children xsi:type="basic:Part" xmi:id="_y9ZBkEjyEeWeEdGpk8uDKw" elementId="geotag.part.pictures" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.PicturesView" label="Pictures" iconURI="platform:/plugin/GeoTag/icons/camera.png" closeable="true"/>
+            <children xsi:type="basic:Part" xmi:id="_2jyvQEjsEeWPCpDMyDviYg" elementId="geotag.part.tracks" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.TracksView" label="Tracks" iconURI="platform:/plugin/GeoTag/icons/tracks.png" closeable="true"/>
+            <children xsi:type="basic:Part" xmi:id="_itUAUFyxEeW2HsKopJlf6w" elementId="geotag.part.trackdetails" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.TrackDetailView" label="Track details" iconURI="platform:/plugin/GeoTag/icons/track_details.png" closeable="true"/>
+          </children>
+          <children xsi:type="basic:PartSashContainer" xmi:id="__8tAQEppEeW2ELtLbeNJRw" elementId="geotag.partsashcontainer.1">
+            <children xsi:type="basic:PartStack" xmi:id="_4amhQEkrEeWeEdGpk8uDKw" elementId="geotag.partstack.1" containerData="8000" accessibilityPhrase="">
+              <children xsi:type="basic:Part" xmi:id="_zh9esEkoEeWeEdGpk8uDKw" elementId="geotag.part.map" accessibilityPhrase="" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.MapView" label="Map" iconURI="platform:/plugin/GeoTag/icons/map.png" tooltip="" closeable="true"/>
+              <children xsi:type="basic:Part" xmi:id="_V_gZ0EpOEeW2ELtLbeNJRw" elementId="geotag.part.trackimprovement" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.TrackImprovementView" label="Track improvement" iconURI="platform:/plugin/GeoTag/icons/track_improvement.png" closeable="true"/>
+              <children xsi:type="basic:Part" xmi:id="_y3RbQEz_EeWosrpiDUtwAg" elementId="geotag.part.positionannotation" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.PositionAnnotationView" label="Position annotation" iconURI="platform:/plugin/GeoTag/icons/position_annotation.png" closeable="true"/>
+              <children xsi:type="basic:Part" xmi:id="_KIA6YEl9EeWp7ZKkFXFJRQ" elementId="geotag.part.geocoding" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.GeocodingView" label="Geocoding" iconURI="platform:/plugin/GeoTag/icons/geotagging.png" closeable="true"/>
+              <children xsi:type="basic:Part" xmi:id="_2tBcAFTaEeW9FPmlc122og" elementId="geotag.part.picturepreview" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.PicturePreviewView" label="Picture preview" iconURI="platform:/plugin/GeoTag/icons/picture_preview.png" closeable="true"/>
+            </children>
+            <children xsi:type="basic:PartStack" xmi:id="_G60o8EpqEeW2ELtLbeNJRw" elementId="geotag.partstack.2" containerData="2000">
+              <children xsi:type="basic:Part" xmi:id="_CgUMgEpqEeW2ELtLbeNJRw" elementId="geotag.part.console" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.ConsoleView" label="Console" iconURI="platform:/plugin/GeoTag/icons/console.png" closeable="true"/>
+              <children xsi:type="basic:Part" xmi:id="_8s58AKzYEeWKiuFmPpmAXQ" elementId="geotag.part.progress" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.ProgressView" label="Progress" iconURI="platform:/plugin/GeoTag/icons/progress.png" closeable="true"/>
+            </children>
+          </children>
+        </children>
+      </children>
+    </children>
+    <mainMenu xmi:id="_opvngEjyEeWeEdGpk8uDKw" elementId="geotag.menu.0">
+      <children xsi:type="menu:Menu" xmi:id="_tDhrMEjyEeWeEdGpk8uDKw" elementId="geotag.menu.file" label="File">
+        <children xsi:type="menu:HandledMenuItem" xmi:id="_u36Z8EjyEeWeEdGpk8uDKw" elementId="geotag.handledmenuitem.openpictures" label="Open pictures" iconURI="platform:/plugin/GeoTag/icons/open_pictures.png" command="_RfFtgEjsEeWPCpDMyDviYg"/>
+        <children xsi:type="menu:HandledMenuItem" xmi:id="_Yv1_QEmlEeWldY65sf-p9w" elementId="geotag.handledmenuitem.openttracks" label="Opent tracks" iconURI="platform:/plugin/GeoTag/icons/open_tracks.png" command="_O9ZNwEmlEeWldY65sf-p9w"/>
+        <children xsi:type="menu:MenuSeparator" xmi:id="_7bk98FpNEeWw7K4UPYioqw" elementId="geotag.menuseparator.1"/>
+        <children xsi:type="menu:HandledMenuItem" xmi:id="_8GGhoFpNEeWw7K4UPYioqw" elementId="geotag.handledmenuitem.exit" label="Exit" command="_lJXDoFpOEeWw7K4UPYioqw"/>
+      </children>
+      <children xsi:type="menu:Menu" xmi:id="_assEwFlvEeWJYuDnA9hTrA" elementId="geotag.menu.window" label="Window">
+        <children xsi:type="menu:Menu" xmi:id="_caqpgFlvEeWJYuDnA9hTrA" elementId="geotag.menu.showview" label="Show View">
+          <children xsi:type="menu:HandledMenuItem" xmi:id="_dwXRIFlvEeWJYuDnA9hTrA" elementId="geotag.handledmenuitem.pictures" label="Pictures" iconURI="platform:/plugin/GeoTag/icons/camera.png" command="_l6ey4FlvEeWJYuDnA9hTrA">
+            <parameters xmi:id="_lxDAcFonEeWJx-SybnTAXw" elementId="geotag.parameter.showPicturesId" name="geotag.commandparameter.viewId" value="geotag.part.pictures"/>
+          </children>
+          <children xsi:type="menu:HandledMenuItem" xmi:id="_zw0G8FonEeWJx-SybnTAXw" elementId="geotag.handledmenuitem.tracks" label="Tracks" iconURI="platform:/plugin/GeoTag/icons/tracks.png" command="_l6ey4FlvEeWJYuDnA9hTrA">
+            <parameters xmi:id="_bxsl8FooEeWJx-SybnTAXw" elementId="geotag.parameter.showTracksId" name="geotag.commandparameter.viewId" value="geotag.part.tracks"/>
+          </children>
+          <children xsi:type="menu:HandledMenuItem" xmi:id="_usWlMFyxEeW2HsKopJlf6w" elementId="geotag.handledmenuitem.trackdetails" label="Track details" iconURI="platform:/plugin/GeoTag/icons/track_details.png" command="_l6ey4FlvEeWJYuDnA9hTrA">
+            <parameters xmi:id="_29PdUFyxEeW2HsKopJlf6w" elementId="geotag.parameter.showTrackDetailsId" name="geotag.commandparameter.viewId" value="geotag.part.trackdetails"/>
+          </children>
+          <children xsi:type="menu:HandledMenuItem" xmi:id="_20_CkFonEeWJx-SybnTAXw" elementId="geotag.handledmenuitem.map" label="Map" iconURI="platform:/plugin/GeoTag/icons/map.png" command="_l6ey4FlvEeWJYuDnA9hTrA">
+            <parameters xmi:id="_dWYEwFooEeWJx-SybnTAXw" elementId="geotag.parameter.showMapId" name="geotag.commandparameter.viewId" value="geotag.part.map"/>
+          </children>
+          <children xsi:type="menu:HandledMenuItem" xmi:id="_8wFIAFonEeWJx-SybnTAXw" elementId="geotag.handledmenuitem.trackimprovement" label="Track improvement" iconURI="platform:/plugin/GeoTag/icons/track_improvement.png" command="_l6ey4FlvEeWJYuDnA9hTrA">
+            <parameters xmi:id="_fgcIkFooEeWJx-SybnTAXw" elementId="geotag.parameter.showTrackImprovementId" name="geotag.commandparameter.viewId" value="geotag.part.trackimprovement"/>
+          </children>
+          <children xsi:type="menu:HandledMenuItem" xmi:id="__qeckFonEeWJx-SybnTAXw" elementId="geotag.handledmenuitem.positionannotation" label="Position annotation" iconURI="platform:/plugin/GeoTag/icons/position_annotation.png" command="_l6ey4FlvEeWJYuDnA9hTrA">
+            <parameters xmi:id="_hpuwUFooEeWJx-SybnTAXw" elementId="geotag.parameter.showPositionAnnotationId" name="geotag.commandparameter.viewId" value="geotag.part.positionannotation"/>
+          </children>
+          <children xsi:type="menu:HandledMenuItem" xmi:id="_CIO4cFooEeWJx-SybnTAXw" elementId="geotag.handledmenuitem.geocoding" label="Geocoding" iconURI="platform:/plugin/GeoTag/icons/geotagging.png" command="_l6ey4FlvEeWJYuDnA9hTrA">
+            <parameters xmi:id="_kAxgMFooEeWJx-SybnTAXw" elementId="geotag.parameter.showGeocodingId" name="geotag.commandparameter.viewId" value="geotag.part.geocoding"/>
+          </children>
+          <children xsi:type="menu:HandledMenuItem" xmi:id="_I-wrYFooEeWJx-SybnTAXw" elementId="geotag.handledmenuitem.picturepreview" label="Picture preview" iconURI="platform:/plugin/GeoTag/icons/picture_preview.png" command="_l6ey4FlvEeWJYuDnA9hTrA">
+            <parameters xmi:id="_lsvSwFooEeWJx-SybnTAXw" elementId="geotag.parameter.showPicturePreviewId" name="geotag.commandparameter.viewId" value="geotag.part.picurePreview"/>
+          </children>
+          <children xsi:type="menu:HandledMenuItem" xmi:id="_LxIsYFooEeWJx-SybnTAXw" elementId="geotag.handledmenuitem.console" label="Console" iconURI="platform:/plugin/GeoTag/icons/console.png" command="_l6ey4FlvEeWJYuDnA9hTrA">
+            <parameters xmi:id="_nXinsFooEeWJx-SybnTAXw" elementId="geotag.parameter.showConsoleId" name="geotag.commandparameter.viewId" value="geotag.part.console"/>
+          </children>
+          <children xsi:type="menu:HandledMenuItem" xmi:id="_KajXwKzZEeWKiuFmPpmAXQ" elementId="geotag.handledmenuitem.progress" label="Progress" iconURI="platform:/plugin/GeoTag/icons/progress.png" command="_l6ey4FlvEeWJYuDnA9hTrA">
+            <parameters xmi:id="_Tse2IKzZEeWKiuFmPpmAXQ" elementId="geotag.parameter.showProgressId" name="geotag.commandparameter.viewId" value="geotag.part.progress"/>
+          </children>
+        </children>
+        <children xsi:type="menu:HandledMenuItem" xmi:id="_zmUeoFpdEeWw7K4UPYioqw" elementId="geotag.handledmenuitem.preferences" label="Preferences" command="_6cco8FpdEeWw7K4UPYioqw"/>
+        <children xsi:type="menu:MenuSeparator" xmi:id="_8EaA4Fo_EeWw7K4UPYioqw" elementId="geotag.menuseparator.0"/>
+        <children xsi:type="menu:HandledMenuItem" xmi:id="_81gtsFo_EeWw7K4UPYioqw" elementId="geotag.handledmenuitem.aboutgeotag" label="About GeoTag" iconURI="platform:/plugin/GeoTag/icons/geotag_16.png" command="__pR10Fo_EeWw7K4UPYioqw"/>
+      </children>
+    </mainMenu>
+    <trimBars xmi:id="_gNUrME6MEeWMYKJJbSTtHA" elementId="geotag.trimbar.0">
+      <children xsi:type="menu:ToolBar" xmi:id="_hDCyQE6MEeWMYKJJbSTtHA" elementId="geotag.toolbar.0">
+        <children xsi:type="menu:HandledToolItem" xmi:id="_r0-DwE6MEeWMYKJJbSTtHA" elementId="geotag.handledtoolitem.openpictures" label="Open pictures" iconURI="platform:/plugin/GeoTag/icons/open_pictures.png" tooltip="Open pictures" command="_RfFtgEjsEeWPCpDMyDviYg"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_i8Q9sE6MEeWMYKJJbSTtHA" elementId="geotag.handledtoolitem.opentracks" label="Open tracks" iconURI="platform:/plugin/GeoTag/icons/open_tracks.png" tooltip="Open tracks" command="_O9ZNwEmlEeWldY65sf-p9w"/>
+      </children>
+    </trimBars>
+  </children>
+  <handlers xmi:id="_dFrucEjyEeWeEdGpk8uDKw" elementId="geotag.handler.openpicturescommand" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.handlers.OpenPicturesHandler" command="_RfFtgEjsEeWPCpDMyDviYg"/>
+  <handlers xmi:id="_SPrd4EmlEeWldY65sf-p9w" elementId="geotag.handler.opentrackscommand" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.handlers.OpenTracksHandler" command="_O9ZNwEmlEeWldY65sf-p9w"/>
+  <handlers xmi:id="_bS418FobEeWJx-SybnTAXw" elementId="geotag.handler.showviewcommand" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.handlers.ShowViewHandler" command="_l6ey4FlvEeWJYuDnA9hTrA"/>
+  <handlers xmi:id="_GmuJEFpAEeWw7K4UPYioqw" elementId="geotag.handler.showaboutcommand" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.handlers.ShowAboutHandler" command="__pR10Fo_EeWw7K4UPYioqw"/>
+  <handlers xmi:id="_qdSbYFpOEeWw7K4UPYioqw" elementId="geotag.handler.exitCommand" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.handlers.ExitHandler" command="_lJXDoFpOEeWw7K4UPYioqw"/>
+  <handlers xmi:id="_LAYVUFpeEeWw7K4UPYioqw" elementId="geotag.handler.showPreferencesCommand" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.handlers.ShowPreferencesHandler" command="_6cco8FpdEeWw7K4UPYioqw"/>
+  <rootContext xmi:id="_c3AF2cjYEeSyMNYR5xypkQ" elementId="org.eclipse.ui.contexts.dialogAndWindow" name="In Dialog and Windows">
+    <children xmi:id="_c3AF2sjYEeSyMNYR5xypkQ" elementId="org.eclipse.ui.contexts.window" name="In Windows"/>
+    <children xmi:id="_c3AF28jYEeSyMNYR5xypkQ" elementId="org.eclipse.ui.contexts.dialog" name="In Dialogs"/>
+  </rootContext>
+  <commands xmi:id="_RfFtgEjsEeWPCpDMyDviYg" elementId="geotag.command.openpicturescommand" commandName="openPicturesCommand"/>
+  <commands xmi:id="_O9ZNwEmlEeWldY65sf-p9w" elementId="geotag.command.opentrackscommand" commandName="openTracksCommand"/>
+  <commands xmi:id="_l6ey4FlvEeWJYuDnA9hTrA" elementId="geotag.command.showviewcommand" commandName="showViewCommand">
+    <parameters xmi:id="_Co1hkFocEeWJx-SybnTAXw" elementId="geotag.commandparameter.viewId" name="Show view id parameter"/>
+  </commands>
+  <commands xmi:id="__pR10Fo_EeWw7K4UPYioqw" elementId="geotag.command.showaboutcommand" commandName="showAboutCommand"/>
+  <commands xmi:id="_lJXDoFpOEeWw7K4UPYioqw" elementId="geotag.command.exitcommand" commandName="exitCommand"/>
+  <commands xmi:id="_6cco8FpdEeWw7K4UPYioqw" elementId="geotag.command.showpreferencescommand" commandName="showPreferencesCommand"/>
+  <addons xmi:id="_c3AF0sjYEeSyMNYR5xypkQ" elementId="org.eclipse.e4.core.commands.service" contributionURI="bundleclass://org.eclipse.e4.core.commands/org.eclipse.e4.core.commands.CommandServiceAddon"/>
+  <addons xmi:id="_c3AF08jYEeSyMNYR5xypkQ" elementId="org.eclipse.e4.ui.contexts.service" contributionURI="bundleclass://org.eclipse.e4.ui.services/org.eclipse.e4.ui.services.ContextServiceAddon"/>
+  <addons xmi:id="_c3AF1MjYEeSyMNYR5xypkQ" elementId="org.eclipse.e4.ui.bindings.service" contributionURI="bundleclass://org.eclipse.e4.ui.bindings/org.eclipse.e4.ui.bindings.BindingServiceAddon"/>
+  <addons xmi:id="_c3AF1cjYEeSyMNYR5xypkQ" elementId="org.eclipse.e4.ui.workbench.commands.model" contributionURI="bundleclass://org.eclipse.e4.ui.workbench/org.eclipse.e4.ui.internal.workbench.addons.CommandProcessingAddon"/>
+  <addons xmi:id="_c3AF1sjYEeSyMNYR5xypkQ" elementId="org.eclipse.e4.ui.workbench.handler.model" contributionURI="bundleclass://org.eclipse.e4.ui.workbench/org.eclipse.e4.ui.internal.workbench.addons.HandlerProcessingAddon"/>
+  <addons xmi:id="_c3AF18jYEeSyMNYR5xypkQ" elementId="org.eclipse.e4.ui.workbench.contexts.model" contributionURI="bundleclass://org.eclipse.e4.ui.workbench/org.eclipse.e4.ui.internal.workbench.addons.ContextProcessingAddon"/>
+  <addons xmi:id="_c3AF2MjYEeSyMNYR5xypkQ" elementId="org.eclipse.e4.ui.workbench.bindings.model" contributionURI="bundleclass://org.eclipse.e4.ui.workbench.swt/org.eclipse.e4.ui.workbench.swt.util.BindingProcessingAddon"/>
+</application:Application>

@@ -1,0 +1,9 @@
+GeoTag/build/
+GeoTag/.gradle/
+GeoTag/.classpath
+GeoTag/.project
+GeoTag/.settings/
+GeoTag/bin/
+GeoTag/test-output/
+GeoTag/derby.log
+GeoTag/product/

@@ -1,0 +1,97 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+
+	dependencies {
+		classpath 'org.akhikhl.wuff:wuff-plugin:0.0.15'
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven {
+		url "https://repository.apache.org/service/local/repositories/snapshots/content/"
+	}
+	flatDir {
+		dirs 'jars'
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.akhikhl.wuff.eclipse-rcp-app'
+
+test {
+	useTestNG()
+}
+
+wuff {
+	selectedEclipseVersion = '4.5'
+
+	eclipseVersion('4.5') {
+	    extendsFrom '4.4'
+
+	    eclipseMavenGroup = 'eclipse-mars'
+
+	    eclipseMirror = 'http://mirror.netcologne.de'
+
+	    eclipseArchiveMirror = 'http://archive.eclipse.org'
+
+		//if gradle fails because it cannot download one of the following files on the eclipse mirror it is a good idea to look for it on the eclipse archive mirror and adjust the entry accordingly
+		
+	    sources {
+			if (org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)) {
+				source "${eclipseMirror}/eclipse/technology/epp/downloads/release/mars/R/eclipse-jee-mars-R-win32-x86_64.zip"
+				source "${eclipseArchiveMirror}/eclipse/downloads/drops4/R-4.5-201506032000/eclipse-SDK-4.5-win32-x86_64.zip", sourcesOnly: true
+			}
+			else {
+				source "${eclipseMirror}/eclipse/technology/epp/downloads/release/mars/R/eclipse-jee-mars-R-linux-gtk-x86_64.tar.gz"
+				source "${eclipseArchiveMirror}/eclipse/downloads/drops4/R-4.5-201506032000/eclipse-SDK-4.5-linux-gtk-x86_64.tar.gz", sourcesOnly: true
+			}
+			
+			source "${eclipseArchiveMirror}/eclipse/downloads/drops4/R-4.5-201506032000/eclipse-4.5-delta-pack.zip"
+
+			languagePackTemplate '${eclipseMirror}/eclipse/technology/babel/babel_language_packs/R0.13.0/mars/BabelLanguagePack-eclipse-uk_4.5.0.v20150804081228.zip'
+		}
+	}
+	
+	products {
+		product platform: 'windows', arch: 'x86_32'
+		product platform: 'windows', arch: 'x86_64'
+		product platform: 'linux', arch: 'x86_32'
+		product platform: 'linux', arch: 'x86_64'
+		
+		windowsIco = project.file("icons/geotag.ico")
+	
+		linuxXpm = project.file("icons/geotag.xpm")
+	}
+}
+
+dependencies {
+	compile 'joda-time:joda-time:2.8.2'
+	compile 'commons-io:commons-io:2.4'
+	compile 'de.micromata.jak:JavaAPIforKml:2.2.1'
+	compile 'org.apache.commons:commons-lang3:3.4'
+	compile 'org.jxmapviewer:jxmapviewer2:2.1'
+	compile group: 'org.apache.commons', name: 'commons-imaging', version: '1.0-SNAPSHOT'
+	compile group: 'com.google.guava', name: 'guava', version: '18.0'
+	compile 'org.apache.commons:commons-collections4:4.0'
+	compile 'com.miglayout:miglayout-swt:5.0'
+	compile 'commons-codec:commons-codec:1.10'
+	compile 'org.eclipse.core:org.eclipse.core.databinding:1.5.0.v20150422-0725'
+	compile 'org.eclipse.core:org.eclipse.core.databinding.beans:1.3.0.v20150422-0725'
+	compile 'org.eclipse.core:org.eclipse.core.databinding.observable:1.5.0.v20150422-0725'
+	compile 'org.eclipse.core:org.eclipse.core.databinding.property:1.5.0.v20150422-0725'
+	compile 'org.eclipse.e4.ui.workbench:org.eclipse.e4.ui.workbench.addons.swt:1.2.0.v20150512-1414'
+	compile 'org.eclipse.e4.ui.workbench:org.eclipse.e4.ui.workbench.swt:0.13.0.v20150504-0621'
+	compile 'org.glassfish:javax.json:1.0.4'
+	compile 'com.sun.xml.bind:jaxb-impl:2.2.11'
+	compile 'com.sun.xml.bind:jaxb-core:2.2.11'
+	compile 'org.testng:testng:6.9.10'
+	compile 'org.jmock:jmock:2.8.1'
+}
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '2.6'
+}
