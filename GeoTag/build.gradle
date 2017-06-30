@@ -34,7 +34,7 @@ wuff {
 
 	    eclipseMavenGroup = 'eclipse-mars'
 
-	    eclipseMirror = 'http://mirror.netcologne.de'
+	    eclipseMirror = 'http://ftp-stud.fht-esslingen.de/pub/Mirrors'
 
 	    eclipseArchiveMirror = 'http://archive.eclipse.org'
 
@@ -90,8 +90,17 @@ dependencies {
 	compile 'com.sun.xml.bind:jaxb-core:2.2.11'
 	compile 'org.testng:testng:6.9.10'
 	compile 'org.jmock:jmock:2.8.1'
+	compile 'org.apache.derby:derbyclient:10.11.1.1'
+	compile 'org.apache.derby:derby:10.11.1.1'	
 }
 
 task wrapper(type: Wrapper) {
 	gradleVersion = '2.6'
 }
+
+task copyLibs(type: Copy) {
+    into "$projectDir/libs"
+    from configurations.runtime
+}
+
+compileJava.dependsOn copyLibs
