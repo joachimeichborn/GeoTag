@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="test" xsi:schemaLocation="http://www.topografix.com/GPX/1/1
+                                http://www.topografix.com/GPX/1/1/gpx.xsd
+                                http://www.garmin.com/xmlschemas/GpxExtensions/v3
+                                http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd
+                                http://www.garmin.com/xmlschemas/TrackPointExtension/v1
+                                http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd" 
+								xmlns="http://www.topografix.com/GPX/1/1" 
+								xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" 
+								xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" 
+								xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <metadata>
+    <time>2015-07-27T20:08:07.000+03:00</time>
+  </metadata>
+  <trk>
+    <trkseg>
+      <trkpt lon="40.4483229" lat="56.4191662">
+        <ele>129.0</ele>
+        <time>2015-07-27T20:08:07.000+03:00</time>
+      </trkpt>
+      <trkpt lon="40.4483077" lat="56.4193077">
+        <ele>138.0</ele>
+        <time>2015-07-27T17:08:36.000Z</time>
+      </trkpt>
+    <trkseg>
+	</trkseg>
+      <trkpt lon="40.4483176" lat="56.4193075">
+        <ele>131.0</ele>
+        <time>2015-07-27T20:09:06.000+03:00</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

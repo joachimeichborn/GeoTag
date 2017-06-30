@@ -1,23 +1,4 @@
-/*
-GeoTag
-
-Copyright (C) 2015  Joachim von Eichborn
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-package joachimeichborn.geotag.io.kml;
+package joachimeichborn.geotag.io.parser.kml;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,7 +19,7 @@ import de.micromata.opengis.kml.v_2_2_0.LabelStyle;
 import de.micromata.opengis.kml.v_2_2_0.LineString;
 import de.micromata.opengis.kml.v_2_2_0.LineStyle;
 import de.micromata.opengis.kml.v_2_2_0.Placemark;
-import joachimeichborn.geotag.io.kml.CirclePolygon.Radian;
+import joachimeichborn.geotag.io.parser.kml.CirclePolygon.Radian;
 import joachimeichborn.geotag.model.PositionData;
 import joachimeichborn.geotag.model.Track;
 

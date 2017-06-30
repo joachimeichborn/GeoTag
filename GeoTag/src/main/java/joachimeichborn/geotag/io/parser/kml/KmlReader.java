@@ -1,23 +1,4 @@
-/*
-GeoTag
-
-Copyright (C) 2015  Joachim von Eichborn
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-package joachimeichborn.geotag.io.kml;
+package joachimeichborn.geotag.io.parser.kml;
 
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -36,26 +17,21 @@ import de.micromata.opengis.kml.v_2_2_0.Placemark;
 import de.micromata.opengis.kml.v_2_2_0.Point;
 import de.micromata.opengis.kml.v_2_2_0.TimePrimitive;
 import de.micromata.opengis.kml.v_2_2_0.TimeStamp;
+import joachimeichborn.geotag.io.parser.Parser;
 import joachimeichborn.geotag.model.Coordinates;
 import joachimeichborn.geotag.model.PositionData;
 import joachimeichborn.geotag.model.Track;
 
-public class KmlReader {
+public class KmlReader implements Parser {
 	private static final Logger logger = Logger.getLogger(KmlReader.class.getSimpleName());
 	private static String FLOAT_PATTERN = "^\\d*.\\d*$";
 
-	private final Path kmlFile;
-
-	public KmlReader(final Path aKmlFile) {
-		kmlFile = aKmlFile;
-	}
-
-	public Track read() {
-		logger.fine("Reading positions from " + kmlFile);
+	public Track read(final Path aKmlFile) {
+		logger.fine("Reading positions from " + aKmlFile);
 
 		final List<PositionData> positions = new LinkedList<>();
 
-		final Kml kml = Kml.unmarshal(kmlFile.toFile());
+		final Kml kml = Kml.unmarshal(aKmlFile.toFile());
 		final Feature kmlFeature = kml.getFeature();
 		if (kmlFeature != null) {
 			if (kmlFeature instanceof Document) {
@@ -70,9 +46,9 @@ public class KmlReader {
 			}
 		}
 
-		logger.fine("Read " + positions.size() + " coordinates from " + kmlFile);
+		logger.fine("Read " + positions.size() + " coordinates from " + aKmlFile);
 
-		return new Track(kmlFile, positions);
+		return new Track(aKmlFile, positions);
 	}
 
 	/**
@@ -134,7 +110,7 @@ public class KmlReader {
 			}
 		}
 
-		logger.fine("FOund description '" + aText + "' that does not contain accuracy information");
+		logger.fine("Found description '" + aText + "' that does not contain accuracy information");
 		return 0;
 	}
 }

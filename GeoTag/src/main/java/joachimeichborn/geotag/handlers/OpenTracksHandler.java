@@ -21,8 +21,11 @@ package joachimeichborn.geotag.handlers;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.FilenameUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -32,18 +35,54 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
-import joachimeichborn.geotag.io.kml.KmlReader;
+import joachimeichborn.geotag.io.parser.Parser;
+import joachimeichborn.geotag.io.parser.gpx.GpxParser;
+import joachimeichborn.geotag.io.parser.kml.KmlReader;
 import joachimeichborn.geotag.model.Track;
 import joachimeichborn.geotag.model.TracksRepo;
 
 public class OpenTracksHandler {
 	private static final Logger logger = Logger.getLogger(OpenTracksHandler.class.getSimpleName());
 
+	private enum SupportedFormats {
+		KML("KML files", "*.kml;*.Kml;*.KML") {
+			@Override
+			public Parser getParser() {
+				return new KmlReader();
+			}
+		},
+		GPX("GPX files", "*.gpx;*.Gpx;*.GPX") {
+			@Override
+			public Parser getParser() {
+				return new GpxParser();
+			}
+		};
+
+		private final String description;
+		private final String fileFilter;
+
+		private SupportedFormats(final String aDescription, final String aFileFilter) {
+			fileFilter = aFileFilter;
+			description = aDescription;
+		}
+
+		public String getDescription() {
+			return description;
+		}
+
+		public String getFileFilter() {
+			return fileFilter;
+		}
+
+		public abstract Parser getParser();
+	}
+	
 	@Execute
 	public static void execute(final Shell aShell) {
 		final FileDialog openDialog = new FileDialog(aShell, SWT.MULTI | SWT.OPEN);
-		openDialog.setFilterExtensions(new String[] { "*.kml;*.Kml;*.KML;", "*.*" });
-		openDialog.setFilterNames(new String[] { "KML files", "All files" });
+		final List<SupportedFormats> formats = Arrays.asList(SupportedFormats.values());
+		openDialog.setFilterExtensions(formats.stream().map(SupportedFormats::getFileFilter).toArray(String[]::new));
+		openDialog.setFilterNames(formats.stream().map(SupportedFormats::getDescription).toArray(String[]::new));
 		openDialog.setText("Open Tracks");
 		openDialog.setFilterPath(System.getProperty("user.home"));
 
@@ -65,11 +104,16 @@ public class OpenTracksHandler {
 				aMonitor.beginTask("Reading " + aFiles.length + " tracks", aFiles.length);
 
 				for (final String file : aFiles) {
-					final Path trackFile = Paths.get(aPath, file);
-					final KmlReader parser = new KmlReader(trackFile);
-					final Track track = parser.read();
-					tracksRepo.addTrack(track);
+					final String extension = FilenameUtils.getExtension(file);
+					final SupportedFormats format = SupportedFormats.valueOf(extension.toUpperCase());
 
+					final Path trackFile = Paths.get(aPath, file);
+					final Parser parser = format.getParser();
+					final Track track = parser.read(trackFile);
+					if (track != null) {
+						tracksRepo.addTrack(track);
+					}
+					
 					aMonitor.worked(1);
 				}
 				

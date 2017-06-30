@@ -68,7 +68,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableColumn;
 
 import joachimeichborn.geotag.handlers.OpenTracksHandler;
-import joachimeichborn.geotag.io.kml.KmlWriter;
+import joachimeichborn.geotag.io.parser.kml.KmlWriter;
 import joachimeichborn.geotag.model.Track;
 import joachimeichborn.geotag.model.TracksRepo;
 import joachimeichborn.geotag.model.selections.TrackSelection;
