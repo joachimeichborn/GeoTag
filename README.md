@@ -6,4 +6,4 @@ An eclipse rich client platform based application to annotate pictures with posi
 - Annotating pcitures with the position information
 - Show pciture positions and KML positions on a map
 
-To build the software, jsut run "gradlew build" in the GeoTag subfolder.
+To build the software, just run "gradlew build" in the GeoTag subfolder.

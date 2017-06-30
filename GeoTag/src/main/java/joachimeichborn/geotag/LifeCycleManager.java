@@ -52,9 +52,6 @@ import joachimeichborn.geotag.logging.ShortLogFormat;
 import joachimeichborn.geotag.ui.preferences.GeneralPreferences;
 
 public class LifeCycleManager {
-	public static final int VERSION_MAJOR = 1;
-	public static final int VERSION_MINOR = 0;
-	public static final int VERSION_PATCH = 0;
 	public static final Path WORKING_DIR = Paths.get(System.getProperty("user.home"), ".geotag");
 	public static final String PREFERENCES_NODE = "joachimeichborn.geotag";
 	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");

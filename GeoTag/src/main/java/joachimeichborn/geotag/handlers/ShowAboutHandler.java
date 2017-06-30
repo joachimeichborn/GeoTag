@@ -19,6 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package joachimeichborn.geotag.handlers;
 
+import java.util.Dictionary;
+import java.util.Enumeration;
+
 import org.eclipse.e4.core.di.annotations.Execute;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.TrayDialog;
@@ -33,8 +36,9 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
-import joachimeichborn.geotag.LifeCycleManager;
 import net.miginfocom.swt.MigLayout;
 
 public class ShowAboutHandler {
@@ -70,8 +74,8 @@ public class ShowAboutHandler {
 			applyDialogFont(composite);
 
 			final Label imageLabel = new Label(composite, SWT.NONE);
-			imageLabel.setImage(
-					new Image(Display.getCurrent(), ShowAboutHandler.class.getResourceAsStream("/icons/about_image.png")));
+			imageLabel.setImage(new Image(Display.getCurrent(),
+					ShowAboutHandler.class.getResourceAsStream("/icons/about_image.png")));
 
 			final Composite textPane = new Composite(composite, SWT.NONE);
 			textPane.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true));
@@ -81,8 +85,7 @@ public class ShowAboutHandler {
 			headlineLabel.setText("GeoTag");
 			headlineLabel.setLayoutData("gaptop 20, gapbottom 30, gapright 300");
 
-			new Label(textPane, SWT.NONE).setText("Version " + LifeCycleManager.VERSION_MAJOR + "."
-					+ LifeCycleManager.VERSION_MINOR + "." + LifeCycleManager.VERSION_PATCH);
+			new Label(textPane, SWT.NONE).setText("Version " + getVersion());
 			new Label(textPane, SWT.NONE).setText("(c) 2015 Joachim von Eichborn");
 			new Label(textPane, SWT.NONE).setText(
 					"This program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.");
@@ -92,6 +95,21 @@ public class ShowAboutHandler {
 					"You should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>.");
 			return composite;
 		}
+
+		private String getVersion() {
+			final Bundle bundle = FrameworkUtil.getBundle(this.getClass());
+			final Dictionary<String, String> headers = bundle.getHeaders();
+			final Enumeration<String> keys = headers.keys();
+			while (keys.hasMoreElements()) {
+				final String key = keys.nextElement();
+				if ("Bundle-Version".equals(key)) {
+					return headers.get(key);
+				}
+			}
+
+			return "0.0.0";
+		}
+
 	}
 
 	@Execute
