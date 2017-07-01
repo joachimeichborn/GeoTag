@@ -14,10 +14,6 @@ import org.testng.annotations.Test;
 import com.google.common.io.Files;
 
 import joachimeichborn.geotag.io.database.DatabaseAccess;
-import joachimeichborn.geotag.preview.PreviewConsumer;
-import joachimeichborn.geotag.preview.PreviewCreator;
-import joachimeichborn.geotag.preview.PreviewKey;
-import joachimeichborn.geotag.preview.PreviewRepo;
 
 public class PreviewRepoTest {
 	@Test
@@ -63,6 +59,18 @@ public class PreviewRepoTest {
 			@Override
 			public void close() {
 				throw new UnsupportedOperationException();
+			}
+			
+			@Override
+			public BufferedImage getPreviewAnySize(String aFile) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public boolean doesPreviewExist(String aFile) {
+				// TODO Auto-generated method stub
+				return false;
 			}
 		};
 

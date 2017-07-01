@@ -32,16 +32,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
-import javax.inject.Inject;
 
-import org.eclipse.e4.core.di.extensions.Preference;
 import org.eclipse.swt.widgets.Display;
 import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
 
-import joachimeichborn.geotag.LifeCycleManager;
 import joachimeichborn.geotag.model.Coordinates;
 import joachimeichborn.geotag.model.Picture;
 import joachimeichborn.geotag.preview.PreviewConsumer;
@@ -49,7 +46,6 @@ import joachimeichborn.geotag.preview.PreviewKey;
 import joachimeichborn.geotag.preview.PreviewRepo;
 import joachimeichborn.geotag.ui.map.ImageWaypointRenderer;
 import joachimeichborn.geotag.ui.parts.MapView;
-import joachimeichborn.geotag.ui.preferences.MapPreferences;
 
 public class PicturePainterHandler extends AbstractPainterHandler<Picture>implements PreviewConsumer {
 	private class ThumbnailUpdater implements Runnable {
@@ -69,16 +65,13 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 	private static final String PICTURE_PLACEMARK = "picture_placemark.png";
 	private static final float DIMENSION_FACTOR = 0.75f;
 	private static final int DIRECT_RERENDER_THRESHOLD = 30;
+	private static final int LONGER_DIMENSION = 160;
 
 	private final Set<String> requestedImages = Collections.synchronizedSet(new HashSet<>());
 	private final PreviewRepo previewRepo;
 	private ImageWaypointRenderer imageRenderer;
 	private ScheduledExecutorService thumbnailUpdateExecutor;
 	private ScheduledFuture<?> thumbnailUpdater;
-
-	@Inject
-	@Preference(nodePath = LifeCycleManager.PREFERENCES_NODE, value = MapPreferences.THUMBNAIL_SIZE)
-	private int longerDimension;
 
 	public PicturePainterHandler(final MapView aMapView) {
 		super(aMapView);
@@ -112,12 +105,12 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 
 		if (mapView.isShowPicturePlacemarks()) {
 			if (mapView.isShowPictureThumbnails()) {
-				final int shorterDimension = (int) (DIMENSION_FACTOR * longerDimension);
+				final int shorterDimension = (int) (DIMENSION_FACTOR * LONGER_DIMENSION);
 				for (final Picture picture : selectedItems) {
 					final Coordinates coordinates = picture.getCoordinates();
 
 					if (coordinates != null) {
-						final PreviewKey key = new PreviewKey(picture.getFile().toString(), longerDimension,
+						final PreviewKey key = new PreviewKey(picture.getFile().toString(), LONGER_DIMENSION,
 								shorterDimension);
 						final BufferedImage thumbnail = previewRepo.getPreview(key, true, this);
 						synchronized (requestedImages) {
@@ -166,7 +159,7 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 
 			// check whether the image that was computed is still of use
 			if (current) {
-				if (Math.max(aImage.getWidth(), aImage.getHeight()) == (int) (DIMENSION_FACTOR * longerDimension)) {
+				if (Math.max(aImage.getWidth(), aImage.getHeight()) == (int) (DIMENSION_FACTOR * LONGER_DIMENSION)) {
 					previewRepo.getPreview(aKey, true, this);
 					requestedImages.add(aKey.getFile());
 				} else {

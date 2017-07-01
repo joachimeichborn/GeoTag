@@ -43,6 +43,19 @@ public interface DatabaseAccess {
 	BufferedImage getPreview(final PreviewKey aKey);
 
 	/**
+	 * @param aFile
+	 * @return a preview for the given file, no information about the desired size is given
+	 *         <code>null</code> if no entry exists for that file
+	 *         */
+	BufferedImage getPreviewAnySize(final String aFile);
+	
+	/**
+	 * @param aFile
+	 * @return true if a preview of any size exists for the given file
+	 */
+	boolean doesPreviewExist(final String aFile);
+	
+	/**
 	 * Trim the database to contain at most the specified number of entries
 	 * @param aMaxNumberEntries
 	 */

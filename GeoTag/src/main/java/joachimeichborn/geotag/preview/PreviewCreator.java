@@ -181,13 +181,13 @@ public class PreviewCreator {
 
 				if ((!rotatable && (exivHeight >= height || exivWidth >= width))
 						|| (rotatable && (Math.max(exivHeight, exivWidth) >= Math.max(height, width)))) {
-					logger.fine("Using exiv thumbnail image to compute preview");
+					logger.fine("Using exiv thumbnail image to compute preview for " + aPictureFile);
 					return exivThumbnail;
 				}
 			}
 
 			try {
-				logger.fine("Using original image to compute preview");
+				logger.fine("Using original image to compute preview for " + aPictureFile);
 				return ImageIO.read(aPictureFile.toFile());
 			} catch (
 
@@ -240,7 +240,7 @@ public class PreviewCreator {
 	private static final Logger logger = Logger.getLogger(PreviewCreator.class.getSimpleName());
 
 	private final ExecutorService threadPool;
-	final PreviewConsumer mPreviewConsumer;
+	final PreviewConsumer previewConsumer;
 
 	/**
 	 * @param aPreviewConsumer
@@ -248,9 +248,9 @@ public class PreviewCreator {
 	 *            ready
 	 */
 	public PreviewCreator(final PreviewConsumer aPreviewConsumer) {
-		mPreviewConsumer = aPreviewConsumer;
+		previewConsumer = aPreviewConsumer;
 		int threads = 2 * Runtime.getRuntime().availableProcessors();
-		logger.fine("Using " + threads + " cores for preview computation");
+		logger.fine("Using " + threads + " threads for preview computation");
 		threadPool = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, new LifoBlockingDeque<Runnable>());
 	}
 
@@ -263,6 +263,6 @@ public class PreviewCreator {
 	 * @param aRotatable
 	 */
 	public void requestPreview(final PreviewKey aKey, final boolean aRotatable) {
-		threadPool.execute(new Worker(aKey, aRotatable, mPreviewConsumer));
+		threadPool.execute(new Worker(aKey, aRotatable, previewConsumer));
 	}
 }

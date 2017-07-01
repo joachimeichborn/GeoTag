@@ -19,12 +19,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package joachimeichborn.geotag.preview;
 
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
+
+import org.jxmapviewer.util.GraphicsUtilities;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -107,24 +111,47 @@ public class PreviewRepo implements PreviewConsumer {
 					requestedImages.put(rotatedKey, aConsumer);
 				}
 			} else {
-				logger.fine("Requesting preview for " + aCacheKey);
-				
-				if (!requestedImages.get(aCacheKey).contains(aConsumer)) {
-					logger.fine("Adding consumer for " + aCacheKey + ": " + aConsumer);
-					requestedImages.put(aCacheKey, aConsumer);
-				}
+				logger.fine("Adding consumer for " + aCacheKey + ": " + aConsumer);
+				requestedImages.put(aCacheKey, aConsumer);
 
+				logger.fine("Requesting preview for " + aCacheKey);
 				previewCreator.requestPreview(aCacheKey, aRotatable);
 			}
 		}
 
+		entry = getDatabase().getPreviewAnySize(aCacheKey.getFile());
+		if (entry != null) {
+			final float widthFactor = aCacheKey.getWidth() / (float) entry.getWidth();
+			final float heightFactor = aCacheKey.getHeight() / (float) entry.getHeight();
+
+			final float factor = Math.min(widthFactor, heightFactor);
+
+			logger.fine("Fetched preview with incorrect size using file" + aCacheKey.getFile());
+			return createPreview(entry, (int) (entry.getWidth() * factor), (int) (entry.getHeight() * factor));
+		}
+
 		return placeholder;
+	}
+	
+	private BufferedImage createPreview(final BufferedImage aImage, final int aWidth, int aHeight) {
+		final BufferedImage temp = GraphicsUtilities.createCompatibleImage(aImage, aWidth, aHeight);
+		final Graphics2D g2 = temp.createGraphics();
+
+		try {
+			g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+			g2.drawImage(aImage, 0, 0, temp.getWidth(), temp.getHeight(), null);
+		} finally {
+			g2.dispose();
+		}
+
+		return temp;
+
 	}
 
 	/**
-	 * Callback that is called once a requested preview is ready. In that
-	 * case, all {@link PreviewConsumer}s that requested that preview from
-	 * the repo are informed that it is ready
+	 * Callback that is called once a requested preview is ready. The preview is
+	 * saved to the database and all {@link PreviewConsumer}s that requested
+	 * that preview from the repo are informed that it is ready
 	 */
 	@Override
 	public void previewReady(final PreviewKey aKey, final BufferedImage aImage) {

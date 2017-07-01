@@ -65,6 +65,14 @@ class DerbyDatabase implements DatabaseAccess {
 			" WHERE " + Preview.FILE_NAME_COLUMN + "=? AND " + Preview.WIDTH_COLUM + "=? AND "
 			+ Preview.HEIGHT_COLUMN + "=?";
 
+	private static final String DOES_PREVIEW_EXIST_QUERY = "SELECT COUNT(" + Preview.FILE_NAME_COLUMN + ") AS c " + //
+			" FROM " + Preview.TABLE_NAME + //
+			" WHERE " + Preview.FILE_NAME_COLUMN + "=?";
+
+	private static final String GET_PREVIEW_ANY_SIZE_QUERY = "SELECT " + Preview.IMAGE_COLUMN + //
+			" FROM " + Preview.TABLE_NAME + //
+			" WHERE " + Preview.FILE_NAME_COLUMN + "=?";
+			
 	private static final String TRIM_PREVIEW_TABLE_QUERY = "DELETE FROM " + Preview.TABLE_NAME + //
 			" WHERE " + Preview.ID_COLUMN + " IN (" + //
 			" SELECT " + Preview.ID_COLUMN + " FROM " + Preview.TABLE_NAME + //
@@ -172,6 +180,73 @@ class DerbyDatabase implements DatabaseAccess {
 				}
 			} catch (final SQLException | IOException aEx) {
 				logger.severe("Could not get preview for " + aKey + ": " + aEx.getMessage());
+				return null;
+			} finally {
+				try {
+					if (statement != null) {
+						statement.close();
+					}
+					if (result != null) {
+						result.close();
+					}
+				} catch (final SQLException aEx) {
+					// nothing to do
+				}
+			}
+		}
+	}
+
+	@Override
+	public boolean doesPreviewExist(final String aFile) {
+		synchronized (readConnection) {
+			PreparedStatement statement = null;
+			ResultSet result = null;
+			try {
+				statement = readConnection.prepareStatement(DOES_PREVIEW_EXIST_QUERY);
+				statement.setString(1, aFile);
+
+				result = statement.executeQuery();
+				if (!result.next()) {
+					return false;
+				} else {
+					return result.getInt("c") > 0;
+				}
+			} catch (final SQLException aEx) {
+				logger.severe("Could not check whether preview exists for " + aFile + ": " + aEx.getMessage());
+				return false;
+			} finally {
+				try {
+					if (statement != null) {
+						statement.close();
+					}
+					if (result != null) {
+						result.close();
+					}
+				} catch (final SQLException aEx) {
+					// nothing to do
+				}
+			}
+		}
+	}
+
+	@Override
+	public BufferedImage getPreviewAnySize(final String aFile) {
+		synchronized (readConnection) {
+			PreparedStatement statement = null;
+			ResultSet result = null;
+			try {
+				statement = readConnection.prepareStatement(GET_PREVIEW_ANY_SIZE_QUERY);
+				statement.setString(1, aFile);
+
+				result = statement.executeQuery();
+				if (!result.next()) {
+					return null;
+				} else {
+					final Blob blob = result.getBlob(Preview.IMAGE_COLUMN);
+					return ImageIO.read(blob.getBinaryStream());
+				}
+			} catch (final SQLException | IOException aEx) {
+				logger.severe("Could not get preview for " + aFile + ": " + aEx.getMessage());
 				return null;
 			} finally {
 				try {
