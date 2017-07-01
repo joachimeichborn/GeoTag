@@ -33,7 +33,7 @@
 <ns3:name>fused3</ns3:name>
 <ns3:description>17.0</ns3:description>
 <ns3:TimeStamp>
-<ns3:when>2015-07-27T20:09:06+03:00</ns3:when></ns3:TimeStamp>
+<ns3:when>2015-07-27T17:09:06Z</ns3:when></ns3:TimeStamp>
 <ns3:styleUrl>#PinStyle</ns3:styleUrl>
 <ns3:Point>
 <ns3:coordinates>40.4483176,56.4193075,131.0</ns3:coordinates>

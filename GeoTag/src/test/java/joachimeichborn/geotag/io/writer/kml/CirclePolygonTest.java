@@ -1,12 +1,12 @@
-package joachimeichborn.geotag.io.parser.kml;
+package joachimeichborn.geotag.io.writer.kml;
 
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import joachimeichborn.geotag.DataProviderList;
-import joachimeichborn.geotag.io.parser.kml.CirclePolygon.CartesianPoint;
-import joachimeichborn.geotag.io.parser.kml.CirclePolygon.Radian;
+import joachimeichborn.geotag.io.writer.kml.CirclePolygon.CartesianPoint;
+import joachimeichborn.geotag.io.writer.kml.CirclePolygon.Radian;
 
 public class CirclePolygonTest {
 	@DataProvider

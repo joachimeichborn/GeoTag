@@ -1,4 +1,4 @@
-package joachimeichborn.geotag.io.parser.kml;
+package joachimeichborn.geotag.io.writer.kml;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,13 +13,14 @@ import org.testng.annotations.Test;
 import com.google.common.io.Files;
 
 import joachimeichborn.geotag.DataProviderList;
-import joachimeichborn.geotag.io.parser.kml.KmlReader;
-import joachimeichborn.geotag.io.parser.kml.KmlWriter;
+import joachimeichborn.geotag.io.parser.TrackParser;
+import joachimeichborn.geotag.io.parser.kml.KmzParser;
+import joachimeichborn.geotag.io.writer.TrackWriter;
 import joachimeichborn.geotag.model.Coordinates;
 import joachimeichborn.geotag.model.PositionData;
 import joachimeichborn.geotag.model.Track;
 
-public class KmlWriterTest {
+public class KmzWriterTest {
 	@DataProvider
 	public Object[][] dataWriting() {
 		final DataProviderList data = new DataProviderList();
@@ -43,13 +44,13 @@ public class KmlWriterTest {
 
 		final Track track = new Track(Paths.get("dummy.kml"), aPositions);
 		
-		final File kmlFile = new File(testDir, "test.kml");
-		final KmlWriter writer = new KmlWriter(kmlFile, track);
-		writer.write();
+		final File kmzFile = new File(testDir, "test.kmz");
+		final TrackWriter writer = new KmzWriter();
+		writer.write(track, kmzFile.toPath());
 
-		final KmlReader reader = new KmlReader();
+		final TrackParser reader = new KmzParser();
 
-		final List<PositionData> readPositions = reader.read(kmlFile.toPath()).getPositions();
+		final List<PositionData> readPositions = reader.read(kmzFile.toPath()).getPositions();
 		
 		Assert.assertEquals(readPositions, aPositions);
 	}

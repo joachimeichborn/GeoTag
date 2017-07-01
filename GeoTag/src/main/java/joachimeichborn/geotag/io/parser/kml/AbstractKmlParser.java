@@ -1,6 +1,24 @@
+/*
+GeoTag
+
+Copyright (C) 2015  Joachim von Eichborn
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package joachimeichborn.geotag.io.parser.kml;
 
-import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -17,22 +35,18 @@ import de.micromata.opengis.kml.v_2_2_0.Placemark;
 import de.micromata.opengis.kml.v_2_2_0.Point;
 import de.micromata.opengis.kml.v_2_2_0.TimePrimitive;
 import de.micromata.opengis.kml.v_2_2_0.TimeStamp;
-import joachimeichborn.geotag.io.parser.Parser;
+import joachimeichborn.geotag.io.parser.TrackParser;
 import joachimeichborn.geotag.model.Coordinates;
 import joachimeichborn.geotag.model.PositionData;
-import joachimeichborn.geotag.model.Track;
 
-public class KmlReader implements Parser {
-	private static final Logger logger = Logger.getLogger(KmlReader.class.getSimpleName());
+public abstract class AbstractKmlParser implements TrackParser {
+	private static final Logger logger = Logger.getLogger(AbstractKmlParser.class.getSimpleName());
 	private static String FLOAT_PATTERN = "^\\d*.\\d*$";
 
-	public Track read(final Path aKmlFile) {
-		logger.fine("Reading positions from " + aKmlFile);
-
+	List<PositionData> readPositions(final Kml aKml) {
 		final List<PositionData> positions = new LinkedList<>();
 
-		final Kml kml = Kml.unmarshal(aKmlFile.toFile());
-		final Feature kmlFeature = kml.getFeature();
+		final Feature kmlFeature = aKml.getFeature();
 		if (kmlFeature != null) {
 			if (kmlFeature instanceof Document) {
 				parseDocument((Document) kmlFeature, positions);
@@ -46,9 +60,7 @@ public class KmlReader implements Parser {
 			}
 		}
 
-		logger.fine("Read " + positions.size() + " coordinates from " + aKmlFile);
-
-		return new Track(aKmlFile, positions);
+		return positions;
 	}
 
 	/**

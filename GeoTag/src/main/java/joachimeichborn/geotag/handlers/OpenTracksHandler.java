@@ -21,8 +21,7 @@ package joachimeichborn.geotag.handlers;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.FilenameUtils;
@@ -35,54 +34,19 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
-import joachimeichborn.geotag.io.parser.Parser;
-import joachimeichborn.geotag.io.parser.gpx.GpxParser;
-import joachimeichborn.geotag.io.parser.kml.KmlReader;
+import joachimeichborn.geotag.io.TrackFileFormat;
+import joachimeichborn.geotag.io.parser.TrackParser;
 import joachimeichborn.geotag.model.Track;
 import joachimeichborn.geotag.model.TracksRepo;
 
 public class OpenTracksHandler {
 	private static final Logger logger = Logger.getLogger(OpenTracksHandler.class.getSimpleName());
 
-	private enum SupportedFormats {
-		KML("KML files", "*.kml;*.Kml;*.KML") {
-			@Override
-			public Parser getParser() {
-				return new KmlReader();
-			}
-		},
-		GPX("GPX files", "*.gpx;*.Gpx;*.GPX") {
-			@Override
-			public Parser getParser() {
-				return new GpxParser();
-			}
-		};
-
-		private final String description;
-		private final String fileFilter;
-
-		private SupportedFormats(final String aDescription, final String aFileFilter) {
-			fileFilter = aFileFilter;
-			description = aDescription;
-		}
-
-		public String getDescription() {
-			return description;
-		}
-
-		public String getFileFilter() {
-			return fileFilter;
-		}
-
-		public abstract Parser getParser();
-	}
-	
 	@Execute
 	public static void execute(final Shell aShell) {
 		final FileDialog openDialog = new FileDialog(aShell, SWT.MULTI | SWT.OPEN);
-		final List<SupportedFormats> formats = Arrays.asList(SupportedFormats.values());
-		openDialog.setFilterExtensions(formats.stream().map(SupportedFormats::getFileFilter).toArray(String[]::new));
-		openDialog.setFilterNames(formats.stream().map(SupportedFormats::getDescription).toArray(String[]::new));
+		openDialog.setFilterExtensions(new String[] { "*.kml;*.kmz;*.gpx" });
+		openDialog.setFilterNames(new String[] { "Track files (KML, KMZ or GPX)" });
 		openDialog.setText("Open Tracks");
 		openDialog.setFilterPath(System.getProperty("user.home"));
 
@@ -90,7 +54,7 @@ public class OpenTracksHandler {
 			final String[] fileNames = openDialog.getFileNames();
 			final String path = openDialog.getFilterPath();
 
-			logger.info("Reading " + fileNames.length + " tracks from " + path + " ...");
+			logger.fine("Reading " + fileNames.length + " tracks from " + path + " ...");
 			openTracks(path, fileNames);
 		}
 	}
@@ -104,21 +68,29 @@ public class OpenTracksHandler {
 				aMonitor.beginTask("Reading " + aFiles.length + " tracks", aFiles.length);
 
 				for (final String file : aFiles) {
-					final String extension = FilenameUtils.getExtension(file);
-					final SupportedFormats format = SupportedFormats.valueOf(extension.toUpperCase());
+					logger.info("Reading track from " + file);
 
-					final Path trackFile = Paths.get(aPath, file);
-					final Parser parser = format.getParser();
-					final Track track = parser.read(trackFile);
-					if (track != null) {
-						tracksRepo.addTrack(track);
+					try {
+						final String extension = FilenameUtils.getExtension(file);
+						final TrackFileFormat format = TrackFileFormat.getByExtension(extension.toLowerCase());
+
+						final Path trackFile = Paths.get(aPath, file);
+						final TrackParser parser = format.getParser();
+						final Track track = parser.read(trackFile);
+						if (track != null) {
+							tracksRepo.addTrack(track);
+						}
+						
+						logger.info("Reading track completed");
+					} catch (Exception e) {
+						logger.log(Level.SEVERE, "Failed to read track from " + file, e);
 					}
-					
+
 					aMonitor.worked(1);
 				}
-				
+
 				aMonitor.done();
-				logger.info("Reading " + aFiles.length + " tracks completed");
+				logger.fine("Reading " + aFiles.length + " tracks completed");
 				return Status.OK_STATUS;
 			}
 		};

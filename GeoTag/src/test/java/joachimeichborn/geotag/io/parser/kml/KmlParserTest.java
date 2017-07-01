@@ -1,4 +1,4 @@
-package joachimeichborn.geotag.io.parser.gpx;
+package joachimeichborn.geotag.io.parser.kml;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,39 +13,38 @@ import org.testng.annotations.Test;
 import com.google.common.io.Files;
 
 import joachimeichborn.geotag.DataProviderList;
-import joachimeichborn.geotag.io.parser.TrackParser;
 import joachimeichborn.geotag.model.Coordinates;
 import joachimeichborn.geotag.model.PositionData;
 import joachimeichborn.geotag.model.Track;
 
-public class GpxParserTest {
+public class KmlParserTest {
 	@DataProvider
 	public Object[][] dataReading() {
 		final DataProviderList data = new DataProviderList();
 		{
 			final List<PositionData> expectedPositions = new ArrayList<>();
 			expectedPositions.add(new PositionData(new Coordinates(56.4191662, 40.4483229, 129.0),
-					"2015-07-27T20:08:07+03:00", "2015-07-27T20:08:07.000+03:00", 0f));
+					"2015-07-27T20:08:07+03:00", "fused1", 8f));
 			expectedPositions.add(new PositionData(new Coordinates(56.4193077, 40.4483077, 138.0),
-					"2015-07-27T20:08:36+03:00", "2015-07-27T17:08:36.000Z", 0f));
+					"2015-07-27T20:08:36+03:00", "fused2", 15f));
 			expectedPositions.add(new PositionData(new Coordinates(56.4193075, 40.4483176, 131.0),
-					"2015-07-27T20:09:06+03:00", "2015-07-27T20:09:06.000+03:00", 0f));
-			data.add("gpx1.gpx", expectedPositions);
+					"2015-07-27T20:09:06+03:00", "fused3", 17f));
+			data.add("kml1.kml", expectedPositions);
 		}
 		return data.toArray();
 	}
 
 	@Test(dataProvider = "dataReading")
-	public void testReading(final String aGpxFilename, final List<PositionData> aExpectedPositions) throws IOException {
+	public void testReading(final String aKmlFilename, final List<PositionData> aExpectedPositions) throws IOException {
 		final File testDir = Files.createTempDir();
 		testDir.deleteOnExit();
 
-		final File gpxFile = new File(testDir, aGpxFilename);
-		FileUtils.copyURLToFile(GpxParser.class.getResource(aGpxFilename), gpxFile);
+		final File kmlFile = new File(testDir, aKmlFilename);
+		FileUtils.copyURLToFile(KmlParser.class.getResource(aKmlFilename), kmlFile);
 
-		final TrackParser reader = new GpxParser();
+		final KmlParser reader = new KmlParser();
 
-		final Track track = reader.read(gpxFile.toPath());
+		final Track track = reader.read(kmlFile.toPath());
 		final List<PositionData> positions = track.getPositions();
 
 		Assert.assertEquals(positions, aExpectedPositions);

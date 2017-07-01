@@ -36,8 +36,8 @@ import org.joda.time.format.ISODateTimeFormat;
  * @author Joachim von Eichborn
  */
 public final class PositionData implements Comparable<PositionData> {
-	private static final Logger logger = Logger.getLogger(PositionData.class.getSimpleName());
-	private static final DateTimeFormatter formatter = ISODateTimeFormat.dateTimeNoMillis().withOffsetParsed();
+	private static final Logger LOGGER = Logger.getLogger(PositionData.class.getSimpleName());
+	private static final DateTimeFormatter FORMATTER = ISODateTimeFormat.dateTimeParser().withOffsetParsed();
 
 	private final Coordinates coordinates;
 	private final DateTime timeStamp;
@@ -62,8 +62,8 @@ public final class PositionData implements Comparable<PositionData> {
 	 *            66.6%
 	 */
 	public PositionData(final Coordinates aPosition, final String aTime, final String aName, final float aAccuracy) {
-		this(aPosition, formatter.parseDateTime(aTime), aName, aAccuracy);
-		logger.finer("Parsed KML time information '" + aTime + "' to '" + timeStamp + "' (with time zone)");
+		this(aPosition, FORMATTER.parseDateTime(aTime), aName, aAccuracy);
+		LOGGER.finer("Parsed time information '" + aTime + "' to '" + timeStamp + "' (with time zone)");
 	}
 
 	/**
@@ -85,7 +85,7 @@ public final class PositionData implements Comparable<PositionData> {
 		timeStampWithoutTimeZone = stripTimeZoneInformation(timeStamp);
 		name = aName;
 		accuracy = aAccuracy;
-		logger.finer("Parsed time stamp '" + aTimeStamp + "' (with time zone) to '" + timeStampWithoutTimeZone
+		LOGGER.finer("Parsed time stamp '" + aTimeStamp + "' (with time zone) to '" + timeStampWithoutTimeZone
 				+ "' (without time zone)");
 	}
 
