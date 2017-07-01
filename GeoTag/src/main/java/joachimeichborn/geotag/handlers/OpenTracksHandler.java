@@ -21,6 +21,9 @@ package joachimeichborn.geotag.handlers;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -67,26 +70,46 @@ public class OpenTracksHandler {
 			protected IStatus run(final IProgressMonitor aMonitor) {
 				aMonitor.beginTask("Reading " + aFiles.length + " tracks", aFiles.length);
 
+				int cores = 2 * Runtime.getRuntime().availableProcessors();
+				logger.fine("Using " + cores + " cores for loading tracks");
+
+				final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(cores, cores, 0L, TimeUnit.MILLISECONDS,
+						new LinkedBlockingQueue<Runnable>());
+
 				for (final String file : aFiles) {
-					logger.info("Reading track from " + file);
+					threadPool.execute(new Runnable() {
+						@Override
+						public void run() {
+							logger.info("Reading track from " + file);
 
-					try {
-						final String extension = FilenameUtils.getExtension(file);
-						final TrackFileFormat format = TrackFileFormat.getByExtension(extension.toLowerCase());
+							try {
+								final String extension = FilenameUtils.getExtension(file);
+								final TrackFileFormat format = TrackFileFormat.getByExtension(extension.toLowerCase());
 
-						final Path trackFile = Paths.get(aPath, file);
-						final TrackParser parser = format.getParser();
-						final Track track = parser.read(trackFile);
-						if (track != null) {
-							tracksRepo.addTrack(track);
+								final Path trackFile = Paths.get(aPath, file);
+								final TrackParser parser = format.getParser();
+								final Track track = parser.read(trackFile);
+								if (track != null) {
+									tracksRepo.addTrack(track);
+								}
+
+								logger.info("Reading track " + file + " completed");
+							} catch (Exception e) {
+								logger.log(Level.SEVERE, "Failed to read track from " + file, e);
+							}
+
+							aMonitor.worked(1);
 						}
-						
-						logger.info("Reading track completed");
-					} catch (Exception e) {
-						logger.log(Level.SEVERE, "Failed to read track from " + file, e);
-					}
+					});
+				}
 
-					aMonitor.worked(1);
+				threadPool.shutdown();
+				try {
+					threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+				} catch (InterruptedException e) {
+					logger.log(Level.FINE, "Waiting for tracks to be loaded was interrupted", e);
+					Thread.currentThread().interrupt();
+					return Status.CANCEL_STATUS;
 				}
 
 				aMonitor.done();

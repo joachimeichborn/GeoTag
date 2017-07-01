@@ -23,6 +23,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -42,7 +46,7 @@ import joachimeichborn.geotag.model.PicturesRepo;
 
 public class OpenPicturesHandler {
 	private static final Logger logger = Logger.getLogger(OpenPicturesHandler.class.getSimpleName());
-	
+
 	@Execute
 	public static void execute(final Shell aShell) {
 		final FileDialog openDialog = new FileDialog(aShell, SWT.MULTI | SWT.OPEN);
@@ -50,7 +54,7 @@ public class OpenPicturesHandler {
 		openDialog.setFilterNames(new String[] { "Picture files", "All files" });
 		openDialog.setText("Open Pictures");
 		openDialog.setFilterPath(System.getProperty("user.home"));
-		
+
 		if (openDialog.open() != null) {
 			final String[] fileNames = openDialog.getFileNames();
 			final String path = openDialog.getFilterPath();
@@ -78,15 +82,35 @@ public class OpenPicturesHandler {
 			protected IStatus run(final IProgressMonitor aMonitor) {
 				aMonitor.beginTask("Reading " + aFiles.size() + " pictures", aFiles.size());
 
-				for (final Path file : aFiles) {
-					final PictureMetadataReader metadata = new PictureMetadataReader(file);
-					final String time = metadata.getTime();
-					final Coordinates coordinates = metadata.getCoordinates();
-					final Geocoding geoCoding = metadata.getGeocoding();
-					final Picture picture = new Picture(file, time, coordinates, geoCoding);
-					picturesRepo.addPicture(picture);
+				int cores = 2 * Runtime.getRuntime().availableProcessors();
+				logger.fine("Using " + cores + " cores for loading pictures");
 
-					aMonitor.worked(1);
+				final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(cores, cores, 0L, TimeUnit.MILLISECONDS,
+						new LinkedBlockingQueue<Runnable>());
+
+				for (final Path file : aFiles) {
+					threadPool.execute(new Runnable() {
+						@Override
+						public void run() {
+							final PictureMetadataReader metadata = new PictureMetadataReader(file);
+							final String time = metadata.getTime();
+							final Coordinates coordinates = metadata.getCoordinates();
+							final Geocoding geoCoding = metadata.getGeocoding();
+							final Picture picture = new Picture(file, time, coordinates, geoCoding);
+							picturesRepo.addPicture(picture);
+
+							aMonitor.worked(1);
+						}
+					});
+				}
+				
+				threadPool.shutdown();
+				try {
+					threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+				} catch (InterruptedException e) {
+					logger.log(Level.FINE, "Waiting for pictures to be loaded was interrupted", e);
+					Thread.currentThread().interrupt();
+					return Status.CANCEL_STATUS;
 				}
 
 				aMonitor.done();

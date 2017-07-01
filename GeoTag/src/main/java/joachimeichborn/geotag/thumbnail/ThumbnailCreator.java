@@ -249,9 +249,9 @@ public class ThumbnailCreator {
 	 */
 	public ThumbnailCreator(final ThumbnailConsumer aThumbnailConsumer) {
 		mThumbnailConsumer = aThumbnailConsumer;
-		int cores = Runtime.getRuntime().availableProcessors();
-		logger.fine("Using " + cores + " cores for thumbnail computation");
-		threadPool = new ThreadPoolExecutor(cores, cores, 0L, TimeUnit.MILLISECONDS, new LifoBlockingDeque<Runnable>());
+		int threads = 2* Runtime.getRuntime().availableProcessors();
+		logger.fine("Using " + threads + " threads for thumbnail computation");
+		threadPool = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, new LifoBlockingDeque<Runnable>());
 	}
 
 	/**
