@@ -40,7 +40,6 @@ public abstract class AbstractKmlWriter implements TrackWriter {
 	private static final String EXTENDED_DATA_DATE = "date";
 	private static final String EXTENDED_DATA_ACCURACY = "accuracy";
 	private static final String EXTENDED_DATA_TIME = "time";
-	private static final String EXTENDED_DATA_NAME = "name";
 
 	private static final String PIN_STYLE = "PinStyle";
 	private static final String ACCURACY_STYLE = "AccuracyStyle";
@@ -77,10 +76,10 @@ public abstract class AbstractKmlWriter implements TrackWriter {
 				.withId(ACCURACY_STYLE);
 		aDocument.createAndAddStyle().withLabelStyle(new LabelStyle().withColor("00ffffff"))
 				.withBalloonStyle(new BalloonStyle()
-						.withText("<h3>$[" + EXTENDED_DATA_NAME + "]</h3><br><table border='1' cellpadding='5'>" + //
+						.withText("<h3>$[name]</h3><br><table border='1' cellpadding='5'>" + //
 								"<tr><td>Date</td><td>$[" + EXTENDED_DATA_DATE + "]</td></tr>" + //
 								"<tr><td>Time</td><td>$[" + EXTENDED_DATA_TIME + "]</td></tr>" + //
-								"<tr><td>Accuracy</td><td>$[" + EXTENDED_DATA_ACCURACY + "]</td></tr>" + //
+								"<tr><td>Accuracy (m)</td><td>$[" + EXTENDED_DATA_ACCURACY + "]</td></tr>" + //
 								"</table>"))
 				.withId(PIN_STYLE);
 	}
@@ -97,7 +96,6 @@ public abstract class AbstractKmlWriter implements TrackWriter {
 		for (final PositionData position : aTrack.getPositions()) {
 			final Placemark place = new Placemark();
 			place.setName(position.getName());
-			place.setDescription(Float.toString(position.getAccuracy()));
 			place.createAndSetTimeStamp()
 					.withWhen(position.getTimeStamp().toString(ISODateTimeFormat.dateTimeNoMillis()));
 			place.createAndSetPoint().addToCoordinates(position.getCoordinates().getLongitude(),
@@ -105,7 +103,6 @@ public abstract class AbstractKmlWriter implements TrackWriter {
 			place.setStyleUrl("#" + PIN_STYLE);
 			place.setVisibility(false);
 			final ExtendedData extendedData = place.createAndSetExtendedData();
-			extendedData.createAndAddData(position.getName()).withName(EXTENDED_DATA_NAME);
 			extendedData.createAndAddData(position.getTimeStamp().toString(ISODateTimeFormat.yearMonthDay()))
 					.withName(EXTENDED_DATA_DATE);
 			extendedData.createAndAddData(position.getTimeStamp().toString(ISODateTimeFormat.hourMinuteSecond()))
