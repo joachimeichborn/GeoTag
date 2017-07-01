@@ -18,8 +18,12 @@
               <children xsi:type="basic:Part" xmi:id="_2tBcAFTaEeW9FPmlc122og" elementId="geotag.part.picturepreview" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.PicturePreviewView" label="Picture preview" iconURI="platform:/plugin/GeoTag/icons/picture_preview.png" closeable="true"/>
             </children>
             <children xsi:type="basic:PartStack" xmi:id="_G60o8EpqEeW2ELtLbeNJRw" elementId="geotag.partstack.2" containerData="2000">
-              <children xsi:type="basic:Part" xmi:id="_CgUMgEpqEeW2ELtLbeNJRw" elementId="geotag.part.console" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.ConsoleView" label="Console" iconURI="platform:/plugin/GeoTag/icons/console.png" closeable="true"/>
-              <children xsi:type="basic:Part" xmi:id="_8s58AKzYEeWKiuFmPpmAXQ" elementId="geotag.part.progress" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.ProgressView" label="Progress" iconURI="platform:/plugin/GeoTag/icons/progress.png" closeable="true"/>
+				<children xsi:type="basic:PartStack" xmi:id="_KxmGcFRBEeeqfaCR4X9I9A" elementId="geotag.partstack.3" containerData="3">
+                	<children xsi:type="basic:Part" xmi:id="_CgUMgEpqEeW2ELtLbeNJRw" elementId="geotag.part.console" containerData="" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.ConsoleView" label="Console" iconURI="platform:/plugin/GeoTag/icons/console.png" closeable="true"/>
+              	</children>
+              	<children xsi:type="basic:PartStack" xmi:id="_LNA3IFRBEeeqfaCR4X9I9A" elementId="geotag.partstack.4" containerData="1">
+                	<children xsi:type="basic:Part" xmi:id="_8s58AKzYEeWKiuFmPpmAXQ" elementId="geotag.part.progress" containerData="" contributionURI="bundleclass://GeoTag/joachimeichborn.geotag.ui.parts.ProgressView" label="Progress" iconURI="platform:/plugin/GeoTag/icons/progress.png" closeable="true"/>
+              	</children>
             </children>
           </children>
         </children>
