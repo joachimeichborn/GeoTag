@@ -44,6 +44,8 @@ import joachimeichborn.geotag.model.Coordinates;
 import joachimeichborn.geotag.model.Geocoding;
 import joachimeichborn.geotag.model.Picture;
 import joachimeichborn.geotag.model.PicturesRepo;
+import joachimeichborn.geotag.preview.PreviewKey;
+import joachimeichborn.geotag.preview.PreviewRequester;
 
 public class OpenPicturesHandler {
 	private static final class PicturesReader implements Runnable {
@@ -116,6 +118,14 @@ public class OpenPicturesHandler {
 
 				final IStatus status = waitForAllPicturesToBeRead(futures);
 
+				final PreviewRequester previewRepo = new PreviewRequester();
+				for (final Path file : aFiles) {
+					final PreviewKey key = new PreviewKey(file.toString(), 160, 120);
+					previewRepo.triggerPreviewCreation(key);
+				}
+				
+				logger.fine("Triggering preview creation for " + aFiles.size() + " pictures done");
+				
 				aMonitor.done();
 				return status;
 			}
