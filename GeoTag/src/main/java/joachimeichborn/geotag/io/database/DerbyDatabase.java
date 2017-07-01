@@ -36,8 +36,8 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
-import joachimeichborn.geotag.io.database.TableModel.Thumbnail;
-import joachimeichborn.geotag.thumbnail.ThumbnailKey;
+import joachimeichborn.geotag.io.database.TableModel.Preview;
+import joachimeichborn.geotag.preview.PreviewKey;
 
 /**
  * Database implementation using Derby
@@ -45,30 +45,30 @@ import joachimeichborn.geotag.thumbnail.ThumbnailKey;
  * @author Joachim von Eichborn
  */
 class DerbyDatabase implements DatabaseAccess {
-	private static final String CREATE_THUMBNAIL_TABLE = "CREATE TABLE " + Thumbnail.TABLE_NAME + " (" + //
-			Thumbnail.ID_COLUMN + " INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " + //
-			Thumbnail.FILE_NAME_COLUMN + " VARCHAR(5000) NOT NULL, " + //
-			Thumbnail.WIDTH_COLUM + " SMALLINT NOT NULL, " + //
-			Thumbnail.HEIGHT_COLUMN + " SMALLINT NOT NULL, " + //
-			Thumbnail.IMAGE_COLUMN + " BLOB NOT NULL, " + //
-			"PRIMARY KEY (" + Thumbnail.FILE_NAME_COLUMN + "," + Thumbnail.WIDTH_COLUM + "," + Thumbnail.HEIGHT_COLUMN
+	private static final String CREATE_PREVIEW_TABLE = "CREATE TABLE " + Preview.TABLE_NAME + " (" + //
+			Preview.ID_COLUMN + " INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " + //
+			Preview.FILE_NAME_COLUMN + " VARCHAR(5000) NOT NULL, " + //
+			Preview.WIDTH_COLUM + " SMALLINT NOT NULL, " + //
+			Preview.HEIGHT_COLUMN + " SMALLINT NOT NULL, " + //
+			Preview.IMAGE_COLUMN + " BLOB NOT NULL, " + //
+			"PRIMARY KEY (" + Preview.FILE_NAME_COLUMN + "," + Preview.WIDTH_COLUM + "," + Preview.HEIGHT_COLUMN
 			+ ")" + //
 			")";
 
-	private static final String SAVE_THUMBNAIL_QUERY = "INSERT INTO " + Thumbnail.TABLE_NAME + //
-			"(" + Thumbnail.FILE_NAME_COLUMN + "," + Thumbnail.WIDTH_COLUM + "," + Thumbnail.HEIGHT_COLUMN + ","
-			+ Thumbnail.IMAGE_COLUMN + ")" + //
+	private static final String SAVE_PREVIEW_QUERY = "INSERT INTO " + Preview.TABLE_NAME + //
+			"(" + Preview.FILE_NAME_COLUMN + "," + Preview.WIDTH_COLUM + "," + Preview.HEIGHT_COLUMN + ","
+			+ Preview.IMAGE_COLUMN + ")" + //
 			" VALUES (?,?,?,?)";
 
-	private static final String GET_THUMBNAIL_QUERY = "SELECT " + Thumbnail.IMAGE_COLUMN + //
-			" FROM " + Thumbnail.TABLE_NAME + //
-			" WHERE " + Thumbnail.FILE_NAME_COLUMN + "=? AND " + Thumbnail.WIDTH_COLUM + "=? AND "
-			+ Thumbnail.HEIGHT_COLUMN + "=?";
+	private static final String GET_PREVIEW_QUERY = "SELECT " + Preview.IMAGE_COLUMN + //
+			" FROM " + Preview.TABLE_NAME + //
+			" WHERE " + Preview.FILE_NAME_COLUMN + "=? AND " + Preview.WIDTH_COLUM + "=? AND "
+			+ Preview.HEIGHT_COLUMN + "=?";
 
-	private static final String TRIM_THUMBNAIL_TABLE_QUERY = "DELETE FROM " + Thumbnail.TABLE_NAME + //
-			" WHERE " + Thumbnail.ID_COLUMN + " IN (" + //
-			" SELECT " + Thumbnail.ID_COLUMN + " FROM " + Thumbnail.TABLE_NAME + //
-			" ORDER BY " + Thumbnail.ID_COLUMN + " DESC OFFSET ? ROWS)";
+	private static final String TRIM_PREVIEW_TABLE_QUERY = "DELETE FROM " + Preview.TABLE_NAME + //
+			" WHERE " + Preview.ID_COLUMN + " IN (" + //
+			" SELECT " + Preview.ID_COLUMN + " FROM " + Preview.TABLE_NAME + //
+			" ORDER BY " + Preview.ID_COLUMN + " DESC OFFSET ? ROWS)";
 
 	private static Logger logger = Logger.getLogger(DerbyDatabase.class.getSimpleName());
 	private Connection readConnection;
@@ -79,8 +79,8 @@ class DerbyDatabase implements DatabaseAccess {
 
 		final Set<String> tableNames = getAllTables();
 
-		if (!tableNames.contains(Thumbnail.TABLE_NAME)) {
-			createThumbnailsTable();
+		if (!tableNames.contains(Preview.TABLE_NAME)) {
+			createPreviewTable();
 		}
 	}
 
@@ -112,25 +112,25 @@ class DerbyDatabase implements DatabaseAccess {
 		return tableNames;
 	}
 
-	private void createThumbnailsTable() {
+	private void createPreviewTable() {
 		try {
-			writeConnection.prepareStatement(CREATE_THUMBNAIL_TABLE).execute();
+			writeConnection.prepareStatement(CREATE_PREVIEW_TABLE).execute();
 		} catch (final SQLException aEx) {
-			logger.severe("Could not create thumbnails table: " + aEx.getMessage());
+			logger.severe("Could not create previews table: " + aEx.getMessage());
 			throw new IllegalStateException(aEx);
 		}
 	}
 
 	@Override
-	public void saveThumbnail(final ThumbnailKey aKey, final BufferedImage aThumbnail) {
-		logger.fine("Saving thumbnail for " + aKey);
+	public void savePreview(final PreviewKey aKey, final BufferedImage aPreview) {
+		logger.fine("Saving preview for " + aKey);
 		synchronized (writeConnection) {
 			PreparedStatement statement = null;
 			try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-				ImageIO.write(aThumbnail, "png", baos);
+				ImageIO.write(aPreview, "png", baos);
 				baos.flush();
 
-				statement = writeConnection.prepareStatement(SAVE_THUMBNAIL_QUERY);
+				statement = writeConnection.prepareStatement(SAVE_PREVIEW_QUERY);
 				statement.setString(1, aKey.getFile());
 				statement.setInt(2, aKey.getWidth());
 				statement.setInt(3, aKey.getHeight());
@@ -138,7 +138,7 @@ class DerbyDatabase implements DatabaseAccess {
 
 				statement.executeUpdate();
 			} catch (final SQLException | IOException aEx) {
-				logger.severe("Could not save thumbnail for " + aKey + ": " + aEx.getMessage());
+				logger.severe("Could not save preview for " + aKey + ": " + aEx.getMessage());
 
 			} finally {
 				if (statement != null) {
@@ -153,12 +153,12 @@ class DerbyDatabase implements DatabaseAccess {
 	}
 
 	@Override
-	public BufferedImage getThumbnail(final ThumbnailKey aKey) {
+	public BufferedImage getPreview(final PreviewKey aKey) {
 		synchronized (readConnection) {
 			PreparedStatement statement = null;
 			ResultSet result = null;
 			try {
-				statement = readConnection.prepareStatement(GET_THUMBNAIL_QUERY);
+				statement = readConnection.prepareStatement(GET_PREVIEW_QUERY);
 				statement.setString(1, aKey.getFile());
 				statement.setInt(2, aKey.getWidth());
 				statement.setInt(3, aKey.getHeight());
@@ -167,11 +167,11 @@ class DerbyDatabase implements DatabaseAccess {
 				if (!result.next()) {
 					return null;
 				} else {
-					final Blob blob = result.getBlob(Thumbnail.IMAGE_COLUMN);
+					final Blob blob = result.getBlob(Preview.IMAGE_COLUMN);
 					return ImageIO.read(blob.getBinaryStream());
 				}
 			} catch (final SQLException | IOException aEx) {
-				logger.severe("Could not get thumbnail for " + aKey + ": " + aEx.getMessage());
+				logger.severe("Could not get preview for " + aKey + ": " + aEx.getMessage());
 				return null;
 			} finally {
 				try {
@@ -188,14 +188,14 @@ class DerbyDatabase implements DatabaseAccess {
 		}
 	}
 
-	public void trim(final int aThumbnailEntries) {
+	public void trim(final int aPreviewEntries) {
 		try {
-			final PreparedStatement statement = writeConnection.prepareStatement(TRIM_THUMBNAIL_TABLE_QUERY);
-			statement.setInt(1, aThumbnailEntries);
+			final PreparedStatement statement = writeConnection.prepareStatement(TRIM_PREVIEW_TABLE_QUERY);
+			statement.setInt(1, aPreviewEntries);
 			int affectedRows = statement.executeUpdate();
-			logger.fine("Trimming database to " + aThumbnailEntries + " entries affected " + affectedRows + " rows");
+			logger.fine("Trimming database to " + aPreviewEntries + " entries affected " + affectedRows + " rows");
 		} catch (final SQLException aEx) {
-			logger.severe("Could not trim thumbnails table: " + aEx.getMessage());
+			logger.severe("Could not trim previews table: " + aEx.getMessage());
 			throw new IllegalStateException(aEx);
 		}
 	}

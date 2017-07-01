@@ -23,9 +23,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,6 +46,28 @@ import joachimeichborn.geotag.model.Picture;
 import joachimeichborn.geotag.model.PicturesRepo;
 
 public class OpenPicturesHandler {
+	private static final class PicturesReader implements Runnable {
+		private final IProgressMonitor monitor;
+		private final Path pictureFile;
+
+		private PicturesReader(final IProgressMonitor aMonitor, final Path aPictureFile) {
+			monitor = aMonitor;
+			pictureFile = aPictureFile;
+		}
+
+		@Override
+		public void run() {
+			final PictureMetadataReader metadata = new PictureMetadataReader(pictureFile);
+			final String time = metadata.getTime();
+			final Coordinates coordinates = metadata.getCoordinates();
+			final Geocoding geoCoding = metadata.getGeocoding();
+			final Picture picture = new Picture(pictureFile, time, coordinates, geoCoding);
+			PicturesRepo.getInstance().addPicture(picture);
+
+			monitor.worked(1);
+		}
+	}
+
 	private static final Logger logger = Logger.getLogger(OpenPicturesHandler.class.getSimpleName());
 
 	@Execute
@@ -75,46 +98,44 @@ public class OpenPicturesHandler {
 	}
 
 	public static void openPictures(final List<Path> aFiles) {
-		final PicturesRepo picturesRepo = PicturesRepo.getInstance();
-
 		final Job job = new Job("Reading pictures") {
 			@Override
 			protected IStatus run(final IProgressMonitor aMonitor) {
 				aMonitor.beginTask("Reading " + aFiles.size() + " pictures", aFiles.size());
 
-				int cores = 2 * Runtime.getRuntime().availableProcessors();
-				logger.fine("Using " + cores + " cores for loading pictures");
+				int threads = 2 * Runtime.getRuntime().availableProcessors();
+				logger.fine("Using " + threads + " cores for loading pictures");
 
-				final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(cores, cores, 0L, TimeUnit.MILLISECONDS,
-						new LinkedBlockingQueue<Runnable>());
+				final ExecutorService threadPool = Executors.newFixedThreadPool(threads);
+
+				final List<Future<?>> futures = new LinkedList<>();
 
 				for (final Path file : aFiles) {
-					threadPool.execute(new Runnable() {
-						@Override
-						public void run() {
-							final PictureMetadataReader metadata = new PictureMetadataReader(file);
-							final String time = metadata.getTime();
-							final Coordinates coordinates = metadata.getCoordinates();
-							final Geocoding geoCoding = metadata.getGeocoding();
-							final Picture picture = new Picture(file, time, coordinates, geoCoding);
-							picturesRepo.addPicture(picture);
+					futures.add(threadPool.submit(new PicturesReader(aMonitor, file)));
+				}
 
-							aMonitor.worked(1);
-						}
-					});
-				}
-				
-				threadPool.shutdown();
-				try {
-					threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-				} catch (InterruptedException e) {
-					logger.log(Level.FINE, "Waiting for pictures to be loaded was interrupted", e);
-					Thread.currentThread().interrupt();
-					return Status.CANCEL_STATUS;
-				}
+				final IStatus status = waitForAllPicturesToBeRead(futures);
 
 				aMonitor.done();
-				logger.info("Reading " + aFiles.size() + " pictures completed");
+				return status;
+			}
+
+			private IStatus waitForAllPicturesToBeRead(final List<Future<?>> futures) {
+				for (final Future<?> future : futures) {
+					try {
+						future.get();
+					} catch (InterruptedException e) {
+						logger.log(Level.FINE, "Waiting for piture to be loaded was interrupted", e);
+						Thread.currentThread().interrupt();
+						return Status.CANCEL_STATUS;
+					} catch (ExecutionException e) {
+						logger.log(Level.FINE, "Reading picture failed", e);
+						Thread.currentThread().interrupt();
+						return Status.CANCEL_STATUS;
+					}
+				}
+
+				logger.info("Reading " + futures.size() + " pictures completed");
 				return Status.OK_STATUS;
 			}
 		};

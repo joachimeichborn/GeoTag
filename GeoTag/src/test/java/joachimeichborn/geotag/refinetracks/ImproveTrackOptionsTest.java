@@ -12,7 +12,7 @@ public class ImproveTrackOptionsTest {
 
 		final ImproveTrackOptions options = builder.build();
 
-		Assert.assertFalse(options.getFilterByAccuracyComparison());
+		Assert.assertFalse(options.getReplaceByAccuracyComparison());
 		Assert.assertFalse(options.getFilterByAccuracyRadius());
 		Assert.assertFalse(options.getFilterByPairwiseDistance());
 		Assert.assertFalse(options.getInterpolatePositions());
@@ -51,7 +51,7 @@ public class ImproveTrackOptionsTest {
 	public void testFullSetting() {
 		final ImproveTrackOptionsBuilder builder = new ImproveTrackOptionsBuilder();
 		builder.setDistanceFactor(2.5);
-		builder.setFilterByAccuracyComparison(true);
+		builder.setReplaceByAccuracyComparison(true);
 		builder.setFilterByAccuracyRadius(true);
 		builder.setFilterByPairwiseDistance(true);
 		builder.setInterpolatePositions(true);
@@ -61,7 +61,7 @@ public class ImproveTrackOptionsTest {
 
 		final ImproveTrackOptions options = builder.build();
 
-		Assert.assertTrue(options.getFilterByAccuracyComparison());
+		Assert.assertTrue(options.getReplaceByAccuracyComparison());
 		Assert.assertTrue(options.getFilterByAccuracyRadius());
 		Assert.assertTrue(options.getFilterByPairwiseDistance());
 		Assert.assertTrue(options.getInterpolatePositions());

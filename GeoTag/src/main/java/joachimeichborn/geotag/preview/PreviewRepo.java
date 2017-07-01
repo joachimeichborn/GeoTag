@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package joachimeichborn.geotag.thumbnail;
+package joachimeichborn.geotag.preview;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -34,63 +34,63 @@ import joachimeichborn.geotag.io.database.DatabaseAccess;
 import joachimeichborn.geotag.io.database.DatabaseFactory;
 
 /**
- * Repo organizing the picture thumbnails.
+ * Repo organizing the picture previews.
  * 
  * @author Joachim von Eichborn
  */
-public class ThumbnailRepo implements ThumbnailConsumer {
-	private static final Logger logger = Logger.getLogger(ThumbnailRepo.class.getSimpleName());
-	private static final String THUMBNAIL_PLACEHOLDER_IMAGE = "thumbnail_placeholder.png";
-	private static final ThumbnailRepo INSTANCE = new ThumbnailRepo();
+public class PreviewRepo implements PreviewConsumer {
+	private static final Logger logger = Logger.getLogger(PreviewRepo.class.getSimpleName());
+	private static final String PREVIEW_PLACEHOLDER_IMAGE = "preview_placeholder.png";
+	private static final PreviewRepo INSTANCE = new PreviewRepo();
 	private DatabaseAccess database;
 
-	private Multimap<ThumbnailKey, ThumbnailConsumer> requestedImages;
+	private Multimap<PreviewKey, PreviewConsumer> requestedImages;
 
 	BufferedImage placeholder;
-	private final ThumbnailCreator thumbnailCreator;
+	private final PreviewCreator previewCreator;
 
-	private ThumbnailRepo() {
-		thumbnailCreator = new ThumbnailCreator(this);
+	private PreviewRepo() {
+		previewCreator = new PreviewCreator(this);
 		requestedImages = Multimaps.synchronizedMultimap(HashMultimap.create());
 
 		placeholder = null;
 		try {
-			placeholder = ImageIO.read(ThumbnailRepo.class.getResource(THUMBNAIL_PLACEHOLDER_IMAGE));
+			placeholder = ImageIO.read(PreviewRepo.class.getResource(PREVIEW_PLACEHOLDER_IMAGE));
 		} catch (IOException | IllegalArgumentException e) {
-			logger.severe("Could not load thumbnail placeholder: " + e.getMessage());
+			logger.severe("Could not load preview placeholder: " + e.getMessage());
 			placeholder = new BufferedImage(100, 75, BufferedImage.TYPE_INT_RGB);
 		}
 	}
 
-	public static ThumbnailRepo getInstance() {
+	public static PreviewRepo getInstance() {
 		return INSTANCE;
 	}
 
 	/**
-	 * Request a thumbnail. If it already exists, it is returned immediately.
+	 * Request a preview. If it already exists, it is returned immediately.
 	 * Otherwise, a placeholder image is returned and the requesting
-	 * {@link ThumbnailConsumer} is informed once the actual thumbnail is ready.
+	 * {@link PreviewConsumer} is informed once the actual preview is ready.
 	 * 
 	 * @param aCacheKey
 	 * @param aRotatable
 	 * @param aConsumer
 	 * @return
 	 */
-	public BufferedImage getThumbnail(final ThumbnailKey aCacheKey, final boolean aRotatable,
-			final ThumbnailConsumer aConsumer) {
-		BufferedImage entry = getDatabase().getThumbnail(aCacheKey);
+	public BufferedImage getPreview(final PreviewKey aCacheKey, final boolean aRotatable,
+			final PreviewConsumer aConsumer) {
+		BufferedImage entry = getDatabase().getPreview(aCacheKey);
 
 		if (entry != null) {
-			logger.fine("Fetched thumbnail using key " + aCacheKey);
+			logger.fine("Fetched preview using key " + aCacheKey);
 			return entry;
 		}
 
-		final ThumbnailKey rotatedKey = ThumbnailKey.getRotatedKey(aCacheKey);
+		final PreviewKey rotatedKey = PreviewKey.getRotatedKey(aCacheKey);
 
 		if (aRotatable) {
-			entry = getDatabase().getThumbnail(rotatedKey);
+			entry = getDatabase().getPreview(rotatedKey);
 			if (entry != null && entry.getWidth() < entry.getHeight()) {
-				logger.fine("Fetched thumbnail using rotated key " + rotatedKey);
+				logger.fine("Fetched preview using rotated key " + rotatedKey);
 				return entry;
 			}
 		}
@@ -107,14 +107,14 @@ public class ThumbnailRepo implements ThumbnailConsumer {
 					requestedImages.put(rotatedKey, aConsumer);
 				}
 			} else {
-				logger.fine("Requesting thumbnail for " + aCacheKey);
+				logger.fine("Requesting preview for " + aCacheKey);
 				
 				if (!requestedImages.get(aCacheKey).contains(aConsumer)) {
 					logger.fine("Adding consumer for " + aCacheKey + ": " + aConsumer);
 					requestedImages.put(aCacheKey, aConsumer);
 				}
 
-				thumbnailCreator.requestThumbnail(aCacheKey, aRotatable);
+				previewCreator.requestPreview(aCacheKey, aRotatable);
 			}
 		}
 
@@ -122,21 +122,21 @@ public class ThumbnailRepo implements ThumbnailConsumer {
 	}
 
 	/**
-	 * Callback that is called once a requested thumbnail is ready. In that
-	 * case, all {@link ThumbnailConsumer}s that requested that thumbnail from
+	 * Callback that is called once a requested preview is ready. In that
+	 * case, all {@link PreviewConsumer}s that requested that preview from
 	 * the repo are informed that it is ready
 	 */
 	@Override
-	public void thumbnailReady(final ThumbnailKey aKey, final BufferedImage aImage) {
-		getDatabase().saveThumbnail(aKey, aImage);
+	public void previewReady(final PreviewKey aKey, final BufferedImage aImage) {
+		getDatabase().savePreview(aKey, aImage);
 
-		final Collection<ThumbnailConsumer> consumers;
+		final Collection<PreviewConsumer> consumers;
 		synchronized (requestedImages) {
 			consumers = requestedImages.removeAll(aKey);
 		}
 
-		for (final ThumbnailConsumer consumer : consumers) {
-			consumer.thumbnailReady(aKey, aImage);
+		for (final PreviewConsumer consumer : consumers) {
+			consumer.previewReady(aKey, aImage);
 		}
 	}
 

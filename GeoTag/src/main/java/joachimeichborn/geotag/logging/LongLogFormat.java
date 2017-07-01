@@ -23,12 +23,13 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.joda.time.DateTime;
 
 public class LongLogFormat extends Formatter {
 	@Override
 	public String format(final LogRecord aRecord) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(aRecord.getMillis());
+		sb.append(new DateTime(aRecord.getMillis()).toString());
 		sb.append(" [").append(aRecord.getLevel().getName().charAt(0)).append("] ");
 		sb.append(aRecord.getMessage());
 		sb.append(" <").append(aRecord.getLoggerName()).append(">");

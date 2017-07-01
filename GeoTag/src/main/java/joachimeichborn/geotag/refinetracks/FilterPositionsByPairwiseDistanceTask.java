@@ -19,8 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package joachimeichborn.geotag.refinetracks;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import joachimeichborn.geotag.model.PositionData;
 
@@ -32,7 +34,8 @@ import joachimeichborn.geotag.model.PositionData;
  * @author Joachim von Eichborn
  */
 public class FilterPositionsByPairwiseDistanceTask extends AbstractTrackImprovementTask {
-
+	private final static Logger logger = Logger.getLogger(FilterPositionsByPairwiseDistanceTask.class.getSimpleName());
+	
 	public FilterPositionsByPairwiseDistanceTask(final ImproveTrackOptions aOptions) {
 		super(aOptions);
 	}
@@ -49,7 +52,7 @@ public class FilterPositionsByPairwiseDistanceTask extends AbstractTrackImprovem
 	void process(final List<PositionData> aPositions) {
 		logger.fine("Position filtering by pairwise distances activated");
 
-		final List<PositionData> clonedPositions = new LinkedList<PositionData>(aPositions);
+		final List<PositionData> clonedPositions = new ArrayList<PositionData>(aPositions);
 
 		for (int i = 1; i < clonedPositions.size() - 1; i++) {
 			final PositionData previous = clonedPositions.get(i - 1);

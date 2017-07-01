@@ -44,14 +44,14 @@ import org.jxmapviewer.viewer.WaypointPainter;
 import joachimeichborn.geotag.LifeCycleManager;
 import joachimeichborn.geotag.model.Coordinates;
 import joachimeichborn.geotag.model.Picture;
-import joachimeichborn.geotag.thumbnail.ThumbnailConsumer;
-import joachimeichborn.geotag.thumbnail.ThumbnailKey;
-import joachimeichborn.geotag.thumbnail.ThumbnailRepo;
+import joachimeichborn.geotag.preview.PreviewConsumer;
+import joachimeichborn.geotag.preview.PreviewKey;
+import joachimeichborn.geotag.preview.PreviewRepo;
 import joachimeichborn.geotag.ui.map.ImageWaypointRenderer;
 import joachimeichborn.geotag.ui.parts.MapView;
 import joachimeichborn.geotag.ui.preferences.MapPreferences;
 
-public class PicturePainterHandler extends AbstractPainterHandler<Picture>implements ThumbnailConsumer {
+public class PicturePainterHandler extends AbstractPainterHandler<Picture>implements PreviewConsumer {
 	private class ThumbnailUpdater implements Runnable {
 		@Override
 		public void run() {
@@ -71,7 +71,7 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 	private static final int DIRECT_RERENDER_THRESHOLD = 30;
 
 	private final Set<String> requestedImages = Collections.synchronizedSet(new HashSet<>());
-	private final ThumbnailRepo thumbnailRepo;
+	private final PreviewRepo previewRepo;
 	private ImageWaypointRenderer imageRenderer;
 	private ScheduledExecutorService thumbnailUpdateExecutor;
 	private ScheduledFuture<?> thumbnailUpdater;
@@ -83,7 +83,7 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 	public PicturePainterHandler(final MapView aMapView) {
 		super(aMapView);
 
-		thumbnailRepo = ThumbnailRepo.getInstance();
+		previewRepo = PreviewRepo.getInstance();
 		thumbnailUpdateExecutor = Executors.newSingleThreadScheduledExecutor();
 		thumbnailUpdater = thumbnailUpdateExecutor.schedule(new ThumbnailUpdater(), 0, TimeUnit.MILLISECONDS);
 
@@ -117,9 +117,9 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 					final Coordinates coordinates = picture.getCoordinates();
 
 					if (coordinates != null) {
-						final ThumbnailKey key = new ThumbnailKey(picture.getFile().toString(), longerDimension,
+						final PreviewKey key = new PreviewKey(picture.getFile().toString(), longerDimension,
 								shorterDimension);
-						final BufferedImage thumbnail = thumbnailRepo.getThumbnail(key, true, this);
+						final BufferedImage thumbnail = previewRepo.getPreview(key, true, this);
 						synchronized (requestedImages) {
 							requestedImages.add(key.getFile());
 						}
@@ -159,7 +159,7 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 	}
 
 	@Override
-	public void thumbnailReady(ThumbnailKey aKey, BufferedImage aImage) {
+	public void previewReady(PreviewKey aKey, BufferedImage aImage) {
 		boolean correctImage = false;
 		synchronized (requestedImages) {
 			final boolean current = requestedImages.remove(aKey.getFile());
@@ -167,7 +167,7 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 			// check whether the image that was computed is still of use
 			if (current) {
 				if (Math.max(aImage.getWidth(), aImage.getHeight()) == (int) (DIMENSION_FACTOR * longerDimension)) {
-					thumbnailRepo.getThumbnail(aKey, true, this);
+					previewRepo.getPreview(aKey, true, this);
 					requestedImages.add(aKey.getFile());
 				} else {
 					correctImage = true;

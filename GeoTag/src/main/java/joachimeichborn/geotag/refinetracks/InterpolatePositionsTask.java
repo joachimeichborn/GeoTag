@@ -21,6 +21,7 @@ package joachimeichborn.geotag.refinetracks;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import joachimeichborn.geotag.model.Coordinates;
 import joachimeichborn.geotag.model.PositionData;
@@ -32,6 +33,8 @@ import joachimeichborn.geotag.model.PositionData;
  * @author Joachim von Eichborn
  */
 public class InterpolatePositionsTask extends AbstractTrackImprovementTask {
+	private final static Logger logger = Logger.getLogger(InterpolatePositionsTask.class.getSimpleName());
+	
 	public InterpolatePositionsTask(final ImproveTrackOptions aOptions) {
 		super(aOptions);
 	}

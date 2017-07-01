@@ -43,17 +43,17 @@ import org.eclipse.swt.widgets.Display;
 
 import joachimeichborn.geotag.model.Picture;
 import joachimeichborn.geotag.model.selections.PictureSelection;
-import joachimeichborn.geotag.thumbnail.ThumbnailConsumer;
-import joachimeichborn.geotag.thumbnail.ThumbnailKey;
-import joachimeichborn.geotag.thumbnail.ThumbnailRepo;
+import joachimeichborn.geotag.preview.PreviewConsumer;
+import joachimeichborn.geotag.preview.PreviewKey;
+import joachimeichborn.geotag.preview.PreviewRepo;
 
-public class PicturePreviewView implements ThumbnailConsumer {
+public class PicturePreviewView implements PreviewConsumer {
 	private static final String PART_ID = "geotag.part.picturepreview";
 
-	private final ThumbnailRepo thumbnailRepo;
-	private ImageIcon thumbnail;
-	private JLabel thumbnailLabel;
-	private Composite thumbnailContainer;
+	private final PreviewRepo previewRepo;
+	private ImageIcon preview;
+	private JLabel previewLabel;
+	private Composite previewContainer;
 	private MPart previewPart;
 	private boolean visible;
 
@@ -63,17 +63,17 @@ public class PicturePreviewView implements ThumbnailConsumer {
 	private Path lastFile;
 
 	public PicturePreviewView() {
-		thumbnailRepo = ThumbnailRepo.getInstance();
+		previewRepo = PreviewRepo.getInstance();
 		visible = false;
 	}
 
 	@PostConstruct
 	public void createPartControl(final Composite aParent) {
-		thumbnail = new ImageIcon();
-		thumbnailLabel = new JLabel(thumbnail);
-		thumbnailContainer = new Composite(aParent, SWT.EMBEDDED);
-		final Frame frame = SWT_AWT.new_Frame(thumbnailContainer);
-		frame.add(thumbnailLabel);
+		preview = new ImageIcon();
+		previewLabel = new JLabel(preview);
+		previewContainer = new Composite(aParent, SWT.EMBEDDED);
+		final Frame frame = SWT_AWT.new_Frame(previewContainer);
+		frame.add(previewLabel);
 		final Color color = aParent.getBackground();
 		frame.setBackground(new java.awt.Color(color.getGreen(), color.getGreen(), color.getBlue()));
 		color.dispose();
@@ -116,19 +116,19 @@ public class PicturePreviewView implements ThumbnailConsumer {
 	}
 
 	private void drawPreview() {
-		if (lastFile != null && thumbnailContainer != null) {
-			final ThumbnailKey key = new ThumbnailKey(lastFile.toString(), thumbnailContainer.getSize().x,
-					thumbnailContainer.getSize().y);
-			final BufferedImage previewImage = thumbnailRepo.getThumbnail(key, false, this);
+		if (lastFile != null && previewContainer != null) {
+			final PreviewKey key = new PreviewKey(lastFile.toString(), previewContainer.getSize().x,
+					previewContainer.getSize().y);
+			final BufferedImage previewImage = previewRepo.getPreview(key, false, this);
 			drawPreview(previewImage);
 		}
 
 	}
 
 	private void drawPreview(final BufferedImage aImage) {
-		thumbnail.setImage(aImage);
-		thumbnailContainer.setVisible(true);
-		thumbnailLabel.repaint();
+		preview.setImage(aImage);
+		previewContainer.setVisible(true);
+		previewLabel.repaint();
 	}
 
 	@Inject
@@ -147,10 +147,10 @@ public class PicturePreviewView implements ThumbnailConsumer {
 	}
 
 	@Override
-	public void thumbnailReady(final ThumbnailKey aKey, final BufferedImage aImage) {
+	public void previewReady(final PreviewKey aKey, final BufferedImage aImage) {
 		if (aKey.getFile().equals(lastFile.toString())) {
 			if (aImage.getWidth() > aKey.getWidth() || aImage.getHeight() > aKey.getHeight()) {
-				thumbnailRepo.getThumbnail(aKey, false, this);
+				previewRepo.getPreview(aKey, false, this);
 			} else {
 				Display.getDefault().asyncExec(new Runnable() {
 					@Override

@@ -21,7 +21,7 @@ package joachimeichborn.geotag.io.database;
 
 import java.awt.image.BufferedImage;
 
-import joachimeichborn.geotag.thumbnail.ThumbnailKey;
+import joachimeichborn.geotag.preview.PreviewKey;
 
 /**
  * Interface for database access methods
@@ -31,16 +31,16 @@ import joachimeichborn.geotag.thumbnail.ThumbnailKey;
 public interface DatabaseAccess {
 	/**
 	 * @param aKey
-	 * @param aThumbnail
+	 * @param aPreview
 	 */
-	void saveThumbnail(final ThumbnailKey aKey, final BufferedImage aThumbnail);
+	void savePreview(final PreviewKey aKey, final BufferedImage aPreview);
 
 	/**
 	 * @param aKey
-	 * @return the thumbnail identified by the specified key or
+	 * @return the preview identified by the specified key or
 	 *         <code>null</code> if no entry exists for that key
 	 */
-	BufferedImage getThumbnail(final ThumbnailKey aKey);
+	BufferedImage getPreview(final PreviewKey aKey);
 
 	/**
 	 * Trim the database to contain at most the specified number of entries

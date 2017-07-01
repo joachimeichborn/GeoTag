@@ -29,7 +29,7 @@ public class ImproveTrackOptions {
 		private boolean removeDuplicates = false;
 		private boolean filterByPairwiseDistance = false;
 		private double distanceFactor = Double.MAX_VALUE;
-		private boolean filterByAccuracyComparison = false;
+		private boolean replaceByAccuracyComparison = false;
 		private boolean filterByAccuracyRadius = false;
 		private int radiusThreshold = Integer.MAX_VALUE;
 		private boolean removeIrrelevantPositions = false;
@@ -60,8 +60,8 @@ public class ImproveTrackOptions {
 			return this;
 		}
 
-		public ImproveTrackOptionsBuilder setFilterByAccuracyComparison(final boolean aFilterByAccuracyComparison) {
-			filterByAccuracyComparison = aFilterByAccuracyComparison;
+		public ImproveTrackOptionsBuilder setReplaceByAccuracyComparison(final boolean aReplaceByAccuracyComparison) {
+			replaceByAccuracyComparison = aReplaceByAccuracyComparison;
 			return this;
 		}
 
@@ -85,7 +85,7 @@ public class ImproveTrackOptions {
 			}
 			
 			return new ImproveTrackOptions(removeDuplicates, filterByPairwiseDistance, distanceFactor,
-					filterByAccuracyComparison, filterByAccuracyRadius, radiusThreshold, removeIrrelevantPositions,
+					replaceByAccuracyComparison, filterByAccuracyRadius, radiusThreshold, removeIrrelevantPositions,
 					interpolatePositions);
 		}
 	}
@@ -93,20 +93,20 @@ public class ImproveTrackOptions {
 	private final boolean removeDuplicates;
 	private final boolean filterByPairwiseDistance;
 	private final double distanceFactor;
-	private final boolean filterByAccuracyComparison;
+	private final boolean replaceByAccuracyComparison;
 	private final boolean filterByAccuracyRadius;
 	private final int radiusThreshold;
 	private final boolean removeIrrelevantPositions;
 	private final boolean interpolatePositions;
 
 	private ImproveTrackOptions(final boolean aRemoveDuplicates, final boolean aFilterByPairwiseDistance,
-			final double aDistanceFactor, final boolean aFilterByAccuracyComparison,
+			final double aDistanceFactor, final boolean aReplaceByAccuracyComparison,
 			final boolean aFilterByAccuracyRadius, final int aRadiusThreshold, final boolean aRemoveIrrelevantPositions,
 			final boolean aInterpolatePositions) {
 		removeDuplicates = aRemoveDuplicates;
 		filterByPairwiseDistance = aFilterByPairwiseDistance;
 		distanceFactor = aDistanceFactor;
-		filterByAccuracyComparison = aFilterByAccuracyComparison;
+		replaceByAccuracyComparison = aReplaceByAccuracyComparison;
 		filterByAccuracyRadius = aFilterByAccuracyRadius;
 		radiusThreshold = aRadiusThreshold;
 		removeIrrelevantPositions = aRemoveIrrelevantPositions;
@@ -125,8 +125,8 @@ public class ImproveTrackOptions {
 		return distanceFactor;
 	}
 
-	public boolean getFilterByAccuracyComparison() {
-		return filterByAccuracyComparison;
+	public boolean getReplaceByAccuracyComparison() {
+		return replaceByAccuracyComparison;
 	}
 
 	public boolean getFilterByAccuracyRadius() {

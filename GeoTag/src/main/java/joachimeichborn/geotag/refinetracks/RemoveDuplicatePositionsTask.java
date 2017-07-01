@@ -21,6 +21,7 @@ package joachimeichborn.geotag.refinetracks;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 import joachimeichborn.geotag.model.PositionData;
 
@@ -30,7 +31,8 @@ import joachimeichborn.geotag.model.PositionData;
  * @author Joachim von Eichborn
  */
 public class RemoveDuplicatePositionsTask extends AbstractTrackImprovementTask {
-
+	private final static Logger logger = Logger.getLogger(RemoveDuplicatePositionsTask.class.getSimpleName());
+	
 	public RemoveDuplicatePositionsTask(final ImproveTrackOptions aOptions) {
 		super(aOptions);
 	}

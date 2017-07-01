@@ -68,14 +68,14 @@ import joachimeichborn.geotag.model.Geocoding;
 import joachimeichborn.geotag.model.Picture;
 import joachimeichborn.geotag.model.PicturesRepo;
 import joachimeichborn.geotag.model.selections.PictureSelection;
-import joachimeichborn.geotag.thumbnail.ThumbnailConsumer;
-import joachimeichborn.geotag.thumbnail.ThumbnailKey;
-import joachimeichborn.geotag.thumbnail.ThumbnailRepo;
+import joachimeichborn.geotag.preview.PreviewConsumer;
+import joachimeichborn.geotag.preview.PreviewKey;
+import joachimeichborn.geotag.preview.PreviewRepo;
 import joachimeichborn.geotag.ui.labelprovider.PictureViewerLabelProvider;
 import joachimeichborn.geotag.ui.labelprovider.PictureViewerObservableLabelProvider;
 import joachimeichborn.geotag.ui.tablecomparators.PictureViewerComparator;
 
-public class PicturesView implements ThumbnailConsumer {
+public class PicturesView implements PreviewConsumer {
 	private static final String PICTURES_PART_ID = "geotag.part.pictures";
 	private static final String[] COLUMNS = new String[] { PictureViewerLabelProvider.NAME_COLUMN,
 			PictureViewerLabelProvider.TIME_COLUMN, PictureViewerLabelProvider.COORDINATES_COLUMN };
@@ -90,23 +90,23 @@ public class PicturesView implements ThumbnailConsumer {
 
 	private TableViewer pictureViewer;
 	private PicturesRepo picturesRepo;
-	private ThumbnailRepo thumbnailRepo;
+	private PreviewRepo previewRepo;
 	private Label nameLabel;
 	private Label pathLabel;
-	private Composite thumbnailContainer;
+	private Composite previewContainer;
 	private Label locationNameLabel;
 	private Label cityLabel;
 	private Label sublocationLabel;
 	private Label provinceLabel;
 	private Label countryLabel;
-	private ImageIcon thumbnail;
-	private JLabel thumbnailLabel;
-	private ThumbnailKey lastKey;
+	private ImageIcon preview;
+	private JLabel previewLabel;
+	private PreviewKey lastKey;
 	private Label selectedPicturesLabel;
 
 	public PicturesView() {
 		picturesRepo = PicturesRepo.getInstance();
-		thumbnailRepo = ThumbnailRepo.getInstance();
+		previewRepo = PreviewRepo.getInstance();
 	}
 
 	@PostConstruct
@@ -195,16 +195,16 @@ public class PicturesView implements ThumbnailConsumer {
 		details.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		details.setLayout(new GridLayout(3, false));
 
-		thumbnail = new ImageIcon();
-		thumbnailLabel = new JLabel(thumbnail);
-		thumbnailContainer = new Composite(details, SWT.EMBEDDED);
-		final GridData thumbnailGridData = new GridData();
-		thumbnailGridData.verticalSpan = 7;
-		thumbnailGridData.heightHint = 160;
-		thumbnailGridData.widthHint = 160;
-		thumbnailContainer.setLayoutData(thumbnailGridData);
-		final Frame frame = SWT_AWT.new_Frame(thumbnailContainer);
-		frame.add(thumbnailLabel);
+		preview = new ImageIcon();
+		previewLabel = new JLabel(preview);
+		previewContainer = new Composite(details, SWT.EMBEDDED);
+		final GridData previewGridData = new GridData();
+		previewGridData.verticalSpan = 7;
+		previewGridData.heightHint = 160;
+		previewGridData.widthHint = 160;
+		previewContainer.setLayoutData(previewGridData);
+		final Frame frame = SWT_AWT.new_Frame(previewContainer);
+		frame.add(previewLabel);
 		final Color color = details.getBackground();
 		frame.setBackground(new java.awt.Color(color.getGreen(), color.getGreen(), color.getBlue()));
 		color.dispose();
@@ -249,17 +249,17 @@ public class PicturesView implements ThumbnailConsumer {
 				if (pictures.size() == 1) {
 					final Picture picture = pictures.get(0);
 					final Path file = picture.getFile();
-					lastKey = new ThumbnailKey(file.toString(), 160, 120);
-					thumbnail.setImage(thumbnailRepo.getThumbnail(lastKey, true, this));
-					thumbnailContainer.setVisible(true);
-					thumbnailLabel.repaint();
+					lastKey = new PreviewKey(file.toString(), 160, 120);
+					preview.setImage(previewRepo.getPreview(lastKey, true, this));
+					previewContainer.setVisible(true);
+					previewLabel.repaint();
 					nameLabel.setText(file.getFileName().toString());
 					pathLabel.setText(file.getParent().toString());
 					fillGeocodingDetails(picture.getGeocoding());
 				} else {
 					nameLabel.setText("");
 					pathLabel.setText("");
-					thumbnailContainer.setVisible(false);
+					previewContainer.setVisible(false);
 					fillGeocodingDetails(null);
 				}
 			}
@@ -286,10 +286,10 @@ public class PicturesView implements ThumbnailConsumer {
 	}
 
 	@Override
-	public void thumbnailReady(final ThumbnailKey aKey, final BufferedImage aImage) {
+	public void previewReady(final PreviewKey aKey, final BufferedImage aImage) {
 		if (aKey.getFile().equals(lastKey.getFile())) {
-			thumbnail.setImage(aImage);
-			thumbnailLabel.repaint();
+			preview.setImage(aImage);
+			previewLabel.repaint();
 		}
 	}
 }
