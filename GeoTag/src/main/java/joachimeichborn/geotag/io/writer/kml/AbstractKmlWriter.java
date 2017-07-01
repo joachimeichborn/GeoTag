@@ -17,17 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package joachimeichborn.geotag.io.kml;
+package joachimeichborn.geotag.io.writer.kml;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.util.logging.Logger;
 
-import org.apache.commons.io.FilenameUtils;
 import org.joda.time.format.ISODateTimeFormat;
 
 import de.micromata.opengis.kml.v_2_2_0.BalloonStyle;
@@ -38,64 +31,35 @@ import de.micromata.opengis.kml.v_2_2_0.LabelStyle;
 import de.micromata.opengis.kml.v_2_2_0.LineString;
 import de.micromata.opengis.kml.v_2_2_0.LineStyle;
 import de.micromata.opengis.kml.v_2_2_0.Placemark;
-import joachimeichborn.geotag.io.kml.CirclePolygon.Radian;
+import joachimeichborn.geotag.io.writer.TrackWriter;
+import joachimeichborn.geotag.io.writer.kml.CirclePolygon.Radian;
 import joachimeichborn.geotag.model.PositionData;
 import joachimeichborn.geotag.model.Track;
 
-public class KmlWriter {
-	private static final Logger logger = Logger.getLogger(KmlWriter.class.getSimpleName());
-
+public abstract class AbstractKmlWriter implements TrackWriter {
 	private static final String EXTENDED_DATA_DATE = "date";
 	private static final String EXTENDED_DATA_ACCURACY = "accuracy";
 	private static final String EXTENDED_DATA_TIME = "time";
-	private static final String EXTENDED_DATA_NAME = "name";
 
 	private static final String PIN_STYLE = "PinStyle";
 	private static final String ACCURACY_STYLE = "AccuracyStyle";
 	private static final String PATH_STYLE = "PathStyle";
 
-	private static File outputKmlFile;
-	private static Track track;
-
-	public KmlWriter(final File aOutputFile, final Track aTrack) {
-		outputKmlFile = aOutputFile;
-		track = aTrack;
-	}
-
-	/**
-	 * Create the output KML file containing:
-	 * <ul>
-	 * <li>placemarks for all positions
-	 * <li>a path connecting all positions in chronological order
-	 * <li>circles showing the accuracy information for all positions
-	 * </ul>
-	 * 
-	 * @throws IOException
-	 */
-	public void write() throws IOException {
-		final String documentTitle = FilenameUtils.removeExtension(outputKmlFile.getName());
-
-		final Document document = new Document().withName(documentTitle).withOpen(true);
+	GeoTagKml createKml(final String aTitle, final Track aTrack) throws IOException {
+		final Document document = new Document().withName(aTitle).withOpen(true);
 
 		addStylesDefinitions(document);
 
-		addPlacemarkFolder(document);
+		addPlacemarkFolder(document, aTrack);
 
-		addPath(document);
+		addPath(document, aTrack);
 
-		addAccuracyCircles(document);
+		addAccuracyCircles(document, aTrack);
 
 		final GeoTagKml kml = new GeoTagKml();
 		kml.setFeature(document);
 
-		try (final Writer kmlWriter = new OutputStreamWriter(new FileOutputStream(outputKmlFile),
-				StandardCharsets.UTF_8)) {
-			kml.marshal(kmlWriter);
-		} catch (IOException e) {
-			throw new IOException("Exception while writing '" + outputKmlFile.toString() + "'", e);
-		}
-
-		logger.fine("Wrote track to " + outputKmlFile.getPath());
+		return kml;
 	}
 
 	/**
@@ -112,10 +76,10 @@ public class KmlWriter {
 				.withId(ACCURACY_STYLE);
 		aDocument.createAndAddStyle().withLabelStyle(new LabelStyle().withColor("00ffffff"))
 				.withBalloonStyle(new BalloonStyle()
-						.withText("<h3>$[" + EXTENDED_DATA_NAME + "]</h3><br><table border='1' cellpadding='5'>" + //
+						.withText("<h3>$[name]</h3><br><table border='1' cellpadding='5'>" + //
 								"<tr><td>Date</td><td>$[" + EXTENDED_DATA_DATE + "]</td></tr>" + //
 								"<tr><td>Time</td><td>$[" + EXTENDED_DATA_TIME + "]</td></tr>" + //
-								"<tr><td>Accuracy</td><td>$[" + EXTENDED_DATA_ACCURACY + "]</td></tr>" + //
+								"<tr><td>Accuracy (m)</td><td>$[" + EXTENDED_DATA_ACCURACY + "]</td></tr>" + //
 								"</table>"))
 				.withId(PIN_STYLE);
 	}
@@ -125,13 +89,13 @@ public class KmlWriter {
 	 * 
 	 * @param aDocument
 	 *            The KML document that is build
+	 * @param aTrack
 	 */
-	private void addPlacemarkFolder(final Document aDocument) {
+	private void addPlacemarkFolder(final Document aDocument, final Track aTrack) {
 		final Folder pinFolder = new Folder().withName("Places").withOpen(false);
-		for (final PositionData position : track.getPositions()) {
+		for (final PositionData position : aTrack.getPositions()) {
 			final Placemark place = new Placemark();
 			place.setName(position.getName());
-			place.setDescription(Float.toString(position.getAccuracy()));
 			place.createAndSetTimeStamp()
 					.withWhen(position.getTimeStamp().toString(ISODateTimeFormat.dateTimeNoMillis()));
 			place.createAndSetPoint().addToCoordinates(position.getCoordinates().getLongitude(),
@@ -139,7 +103,6 @@ public class KmlWriter {
 			place.setStyleUrl("#" + PIN_STYLE);
 			place.setVisibility(false);
 			final ExtendedData extendedData = place.createAndSetExtendedData();
-			extendedData.createAndAddData(position.getName()).withName(EXTENDED_DATA_NAME);
 			extendedData.createAndAddData(position.getTimeStamp().toString(ISODateTimeFormat.yearMonthDay()))
 					.withName(EXTENDED_DATA_DATE);
 			extendedData.createAndAddData(position.getTimeStamp().toString(ISODateTimeFormat.hourMinuteSecond()))
@@ -156,11 +119,11 @@ public class KmlWriter {
 	 * @param aDocument
 	 *            The KML document that is build
 	 */
-	private void addPath(final Document aDocument) {
+	private void addPath(final Document aDocument, final Track aTrack) {
 		final LineString line = new LineString().withTessellate(true);
 
 		PositionData lastPosition = null;
-		for (final PositionData position : track.getPositions()) {
+		for (final PositionData position : aTrack.getPositions()) {
 			if (lastPosition != null && !(position.getCoordinates().equals(lastPosition.getCoordinates()))) {
 				line.addToCoordinates(position.getCoordinates().getLongitude(), position.getCoordinates().getLatitude(),
 						position.getCoordinates().getAltitude());
@@ -176,10 +139,10 @@ public class KmlWriter {
 	 * @param aDocument
 	 *            The KML document that is build
 	 */
-	private void addAccuracyCircles(final Document aDocument) {
+	private void addAccuracyCircles(final Document aDocument, final Track aTrack) {
 		final Folder accuraciesFolder = new Folder().withName("Accuracies").withOpen(false);
-		for (final PositionData position : track.getPositions()) {
-			if (position.getAccuracy() > 0) {
+		for (final PositionData position : aTrack.getPositions()) {
+			if (position.getAccuracy() > 0f) {
 				final LineString circle = new LineString().withTessellate(true);
 
 				for (final Radian point : CirclePolygon.calculateCirclePoints(position.getCoordinates().getLatitude(),
@@ -194,4 +157,5 @@ public class KmlWriter {
 		}
 		aDocument.getFeature().add(accuraciesFolder);
 	}
+
 }

@@ -17,10 +17,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+package joachimeichborn.geotag.io.writer.kml;
+
+import java.util.LinkedList;
+import java.util.List;
 
 //The MIT License
 //
-// Copyright (c) 2007 Nick Galbreath
+// Copyright (c) 2007 Nick Galbreath, (c) 2014 Joachim von Eichborn
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -39,11 +43,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-package joachimeichborn.geotag.io.kml;
-
-import java.util.LinkedList;
-import java.util.List;
+//
+//
+// Version 3 - 31-Aug-2014  Ported to Java, limited to spherical circles
+// Version 2 - 12-Sept-2007 Simplified XML output
+//                          Added commandline interface
+// Version 1 - 10-Sept-2007 Initial release
+//
 
 /**
  * Compute a circle-shaped polygon with a specified radius around a given

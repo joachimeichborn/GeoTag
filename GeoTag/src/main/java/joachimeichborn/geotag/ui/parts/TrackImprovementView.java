@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+import org.apache.commons.io.FilenameUtils;
 import org.eclipse.core.databinding.beans.BeanProperties;
 import org.eclipse.core.databinding.beans.IBeanValueProperty;
 import org.eclipse.core.databinding.observable.list.IObservableList;
@@ -68,7 +69,9 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableColumn;
 
 import joachimeichborn.geotag.handlers.OpenTracksHandler;
-import joachimeichborn.geotag.io.kml.KmlWriter;
+import joachimeichborn.geotag.io.TrackFileFormat;
+import joachimeichborn.geotag.io.writer.TrackWriter;
+import joachimeichborn.geotag.io.writer.kml.KmlWriter;
 import joachimeichborn.geotag.model.Track;
 import joachimeichborn.geotag.model.TracksRepo;
 import joachimeichborn.geotag.model.selections.TrackSelection;
@@ -294,17 +297,19 @@ public class TrackImprovementView {
 	@Persist
 	public void saveRefinedTrack() {
 		final FileDialog saveDialog = new FileDialog(new Shell(Display.getCurrent()), SWT.SAVE);
-		saveDialog.setFileName("Refined track.kml");
-		saveDialog.setFilterExtensions(new String[] { "*.kml" });
-		saveDialog.setFilterNames(new String[] { "KML file" });
+		saveDialog.setFileName("Refined track");
+		saveDialog.setFilterExtensions(new String[] { "*.kmz", "*.kml" });
+		saveDialog.setFilterNames(new String[] { "KMZ file", "KML file" });
 		saveDialog.setText("Save refined track");
 		saveDialog.setFilterPath(System.getProperty("user.home"));
 		if (saveDialog.open() != null) {
 			final File file = new File(saveDialog.getFilterPath(), saveDialog.getFileName());
-			final KmlWriter writer = new KmlWriter(file, refinedTrack);
+			final String extension = FilenameUtils.getExtension(saveDialog.getFileName());
+			final TrackFileFormat format = TrackFileFormat.getByExtension(extension);
+			final TrackWriter writer = format.getWriter();
 
 			try {
-				writer.write();
+				writer.write(refinedTrack, file.toPath());
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Failed to write refined track: " + e.getMessage(), e);
 				return;

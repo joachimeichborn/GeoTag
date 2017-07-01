@@ -21,8 +21,10 @@ package joachimeichborn.geotag.handlers;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.FilenameUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -32,7 +34,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
-import joachimeichborn.geotag.io.kml.KmlReader;
+import joachimeichborn.geotag.io.TrackFileFormat;
+import joachimeichborn.geotag.io.parser.TrackParser;
 import joachimeichborn.geotag.model.Track;
 import joachimeichborn.geotag.model.TracksRepo;
 
@@ -42,8 +45,8 @@ public class OpenTracksHandler {
 	@Execute
 	public static void execute(final Shell aShell) {
 		final FileDialog openDialog = new FileDialog(aShell, SWT.MULTI | SWT.OPEN);
-		openDialog.setFilterExtensions(new String[] { "*.kml;*.Kml;*.KML;", "*.*" });
-		openDialog.setFilterNames(new String[] { "KML files", "All files" });
+		openDialog.setFilterExtensions(new String[] { "*.kml;*.kmz;*.gpx" });
+		openDialog.setFilterNames(new String[] { "Track files (KML, KMZ or GPX)" });
 		openDialog.setText("Open Tracks");
 		openDialog.setFilterPath(System.getProperty("user.home"));
 
@@ -51,7 +54,7 @@ public class OpenTracksHandler {
 			final String[] fileNames = openDialog.getFileNames();
 			final String path = openDialog.getFilterPath();
 
-			logger.info("Reading " + fileNames.length + " tracks from " + path + " ...");
+			logger.fine("Reading " + fileNames.length + " tracks from " + path + " ...");
 			openTracks(path, fileNames);
 		}
 	}
@@ -65,16 +68,29 @@ public class OpenTracksHandler {
 				aMonitor.beginTask("Reading " + aFiles.length + " tracks", aFiles.length);
 
 				for (final String file : aFiles) {
-					final Path trackFile = Paths.get(aPath, file);
-					final KmlReader parser = new KmlReader(trackFile);
-					final Track track = parser.read();
-					tracksRepo.addTrack(track);
+					logger.info("Reading track from " + file);
+
+					try {
+						final String extension = FilenameUtils.getExtension(file);
+						final TrackFileFormat format = TrackFileFormat.getByExtension(extension.toLowerCase());
+
+						final Path trackFile = Paths.get(aPath, file);
+						final TrackParser parser = format.getParser();
+						final Track track = parser.read(trackFile);
+						if (track != null) {
+							tracksRepo.addTrack(track);
+						}
+						
+						logger.info("Reading track completed");
+					} catch (Exception e) {
+						logger.log(Level.SEVERE, "Failed to read track from " + file, e);
+					}
 
 					aMonitor.worked(1);
 				}
-				
+
 				aMonitor.done();
-				logger.info("Reading " + aFiles.length + " tracks completed");
+				logger.fine("Reading " + aFiles.length + " tracks completed");
 				return Status.OK_STATUS;
 			}
 		};
