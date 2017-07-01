@@ -19,13 +19,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package joachimeichborn.geotag.io.parser.kml;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang3.StringUtils;
 
 import de.micromata.opengis.kml.v_2_2_0.Coordinate;
+import de.micromata.opengis.kml.v_2_2_0.Data;
 import de.micromata.opengis.kml.v_2_2_0.Document;
 import de.micromata.opengis.kml.v_2_2_0.Feature;
 import de.micromata.opengis.kml.v_2_2_0.Folder;
@@ -35,6 +38,7 @@ import de.micromata.opengis.kml.v_2_2_0.Placemark;
 import de.micromata.opengis.kml.v_2_2_0.Point;
 import de.micromata.opengis.kml.v_2_2_0.TimePrimitive;
 import de.micromata.opengis.kml.v_2_2_0.TimeStamp;
+import joachimeichborn.geotag.io.parser.PositionParsingException;
 import joachimeichborn.geotag.io.parser.TrackParser;
 import joachimeichborn.geotag.model.Coordinates;
 import joachimeichborn.geotag.model.PositionData;
@@ -49,12 +53,12 @@ public abstract class AbstractKmlParser implements TrackParser {
 		final Feature kmlFeature = aKml.getFeature();
 		if (kmlFeature != null) {
 			if (kmlFeature instanceof Document) {
-				parseDocument((Document) kmlFeature, positions);
+				positions.addAll(parseDocument((Document) kmlFeature));
 			} else if (kmlFeature instanceof Folder) {
 				final Folder folder = (Folder) kmlFeature;
 				for (final Feature folderFeature : folder.getFeature()) {
 					if (folderFeature instanceof Document) {
-						parseDocument((Document) folderFeature, positions);
+						positions.addAll(parseDocument((Document) folderFeature));
 					}
 				}
 			}
@@ -70,20 +74,31 @@ public abstract class AbstractKmlParser implements TrackParser {
 	 *            The document subnode
 	 * @param aPositions
 	 *            The position list
+	 * @return
 	 */
-	private void parseDocument(final Document aDocument, final List<PositionData> aPositions) {
+	private List<PositionData> parseDocument(final Document aDocument) {
+		final List<PositionData> positions = new ArrayList<PositionData>();
+
 		for (final Feature documentFeature : aDocument.getFeature()) {
 			if (documentFeature instanceof Placemark) {
-				parsePlacemark((Placemark) documentFeature, aPositions);
+				final PositionData position = parsePlacemark((Placemark) documentFeature);
+				if (position != null) {
+					positions.add(position);
+				}
 			} else if (documentFeature instanceof Folder) {
 				final Folder folder = (Folder) documentFeature;
 				for (final Feature folderFeature : folder.getFeature()) {
 					if (folderFeature instanceof Placemark) {
-						parsePlacemark((Placemark) folderFeature, aPositions);
+						final PositionData position = parsePlacemark((Placemark) folderFeature);
+						if (position != null) {
+							positions.add(position);
+						}
 					}
 				}
 			}
 		}
+
+		return positions;
 	}
 
 	/**
@@ -95,34 +110,62 @@ public abstract class AbstractKmlParser implements TrackParser {
 	 *            The placemark subnode
 	 * @param aPositions
 	 *            The position list
+	 * @throws PositionParsingException
 	 */
-	private void parsePlacemark(final Placemark aPlacemark, final List<PositionData> aPositions) {
+	private PositionData parsePlacemark(final Placemark aPlacemark) {
 		final TimePrimitive timePrimitive = aPlacemark.getTimePrimitive();
-		if (timePrimitive instanceof TimeStamp) {
-			final TimeStamp timeStamp = (TimeStamp) timePrimitive;
-			final String time = timeStamp.getWhen();
-			final Geometry geometry = aPlacemark.getGeometry();
-			if (geometry instanceof Point) {
-				final Point point = (Point) geometry;
-				final List<Coordinate> coordinates = point.getCoordinates();
-				for (final Coordinate coordinate : coordinates) {
-					float accuracy = getPositionAccuracy(aPlacemark.getDescription());
-					final Coordinates position = new Coordinates(coordinate.getLatitude(), coordinate.getLongitude(),
-							coordinate.getAltitude());
-					aPositions.add(new PositionData(position, time, aPlacemark.getName(), accuracy));
+		final Geometry geometry = aPlacemark.getGeometry();
+		if (!(timePrimitive instanceof TimeStamp)) {
+			logger.finer("Skipping placemark " + aPlacemark.getName() + " without time stamp");
+			return null;
+		}
+		if (!(geometry instanceof Point)) {
+			logger.finer("Skipping placemark " + aPlacemark.getName() + " without point geometry");
+			return null;
+		}
+
+		final String time = ((TimeStamp) timePrimitive).getWhen();
+		float accuracy = parseAccuracy(aPlacemark);
+		final Coordinates position;
+		try {
+			position = parseCoordinates(geometry);
+		} catch (PositionParsingException e) {
+			logger.log(Level.WARNING, "Could not parse placemark " + aPlacemark.getName(), e);
+			return null;
+		}
+
+		return new PositionData(position, time, aPlacemark.getName(), accuracy);
+	}
+
+	private float parseAccuracy(final Placemark aPlacemark) {
+		if (aPlacemark.getExtendedData() != null) {
+			final List<Data> data = aPlacemark.getExtendedData().getData();
+			for (final Data entry : data) {
+				if ("accuracy".equals(entry.getName()) && entry.getValue().matches(FLOAT_PATTERN)) {
+					return Float.valueOf(entry.getValue());
 				}
 			}
 		}
-	}
 
-	private float getPositionAccuracy(final String aText) {
-		if (!StringUtils.isEmpty(aText)) {
-			if (aText.matches(FLOAT_PATTERN)) {
-				return Float.valueOf(aText);
-			}
+		final String description = aPlacemark.getDescription();
+		if (!StringUtils.isEmpty(description) && description.matches(FLOAT_PATTERN)) {
+			return Float.valueOf(description);
 		}
 
-		logger.fine("Found description '" + aText + "' that does not contain accuracy information");
-		return 0;
+		return 0f;
+	}
+
+	private Coordinates parseCoordinates(final Geometry aGeometry) throws PositionParsingException {
+		final List<Coordinate> coordinates = ((Point) aGeometry).getCoordinates();
+
+		if (coordinates.size() != 1) {
+			throw new PositionParsingException(
+					"Placemark contains " + coordinates.size() + " coordinates instead of one as expected");
+		}
+
+		final Coordinate coordinate = coordinates.get(0);
+		final Coordinates position = new Coordinates(coordinate.getLatitude(), coordinate.getLongitude(),
+				coordinate.getAltitude());
+		return position;
 	}
 }

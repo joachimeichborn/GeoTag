@@ -145,7 +145,7 @@ public abstract class AbstractKmlWriter implements TrackWriter {
 	private void addAccuracyCircles(final Document aDocument, final Track aTrack) {
 		final Folder accuraciesFolder = new Folder().withName("Accuracies").withOpen(false);
 		for (final PositionData position : aTrack.getPositions()) {
-			if (position.getAccuracy() > 0) {
+			if (position.getAccuracy() > 0f) {
 				final LineString circle = new LineString().withTessellate(true);
 
 				for (final Radian point : CirclePolygon.calculateCirclePoints(position.getCoordinates().getLatitude(),
