@@ -30,14 +30,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
-import joachimeichborn.geotag.io.database.TableModel.Thumbnail;
-import joachimeichborn.geotag.thumbnail.ThumbnailKey;
+import joachimeichborn.geotag.io.database.TableModel.Preview;
+import joachimeichborn.geotag.preview.PreviewKey;
 
 /**
  * Database implementation using Derby
@@ -45,30 +46,35 @@ import joachimeichborn.geotag.thumbnail.ThumbnailKey;
  * @author Joachim von Eichborn
  */
 class DerbyDatabase implements DatabaseAccess {
-	private static final String CREATE_THUMBNAIL_TABLE = "CREATE TABLE " + Thumbnail.TABLE_NAME + " (" + //
-			Thumbnail.ID_COLUMN + " INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " + //
-			Thumbnail.FILE_NAME_COLUMN + " VARCHAR(5000) NOT NULL, " + //
-			Thumbnail.WIDTH_COLUM + " SMALLINT NOT NULL, " + //
-			Thumbnail.HEIGHT_COLUMN + " SMALLINT NOT NULL, " + //
-			Thumbnail.IMAGE_COLUMN + " BLOB NOT NULL, " + //
-			"PRIMARY KEY (" + Thumbnail.FILE_NAME_COLUMN + "," + Thumbnail.WIDTH_COLUM + "," + Thumbnail.HEIGHT_COLUMN
-			+ ")" + //
+	private static final String CREATE_PREVIEW_TABLE = "CREATE TABLE " + Preview.TABLE_NAME + " (" + //
+			Preview.ID_COLUMN + " INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " + //
+			Preview.FILE_NAME_COLUMN + " VARCHAR(5000) NOT NULL, " + //
+			Preview.WIDTH_COLUM + " SMALLINT NOT NULL, " + //
+			Preview.HEIGHT_COLUMN + " SMALLINT NOT NULL, " + //
+			Preview.IMAGE_COLUMN + " BLOB NOT NULL, " + //
+			"PRIMARY KEY (" + Preview.FILE_NAME_COLUMN + "," + Preview.WIDTH_COLUM + "," + Preview.HEIGHT_COLUMN + ")" + //
 			")";
 
-	private static final String SAVE_THUMBNAIL_QUERY = "INSERT INTO " + Thumbnail.TABLE_NAME + //
-			"(" + Thumbnail.FILE_NAME_COLUMN + "," + Thumbnail.WIDTH_COLUM + "," + Thumbnail.HEIGHT_COLUMN + ","
-			+ Thumbnail.IMAGE_COLUMN + ")" + //
+	private static final String SAVE_PREVIEW_QUERY = "INSERT INTO " + Preview.TABLE_NAME + //
+			"(" + Preview.FILE_NAME_COLUMN + "," + Preview.WIDTH_COLUM + "," + Preview.HEIGHT_COLUMN + "," + Preview.IMAGE_COLUMN + ")" + //
 			" VALUES (?,?,?,?)";
 
-	private static final String GET_THUMBNAIL_QUERY = "SELECT " + Thumbnail.IMAGE_COLUMN + //
-			" FROM " + Thumbnail.TABLE_NAME + //
-			" WHERE " + Thumbnail.FILE_NAME_COLUMN + "=? AND " + Thumbnail.WIDTH_COLUM + "=? AND "
-			+ Thumbnail.HEIGHT_COLUMN + "=?";
+	private static final String GET_PREVIEW_QUERY = "SELECT " + Preview.IMAGE_COLUMN + //
+			" FROM " + Preview.TABLE_NAME + //
+			" WHERE " + Preview.FILE_NAME_COLUMN + "=? AND " + Preview.WIDTH_COLUM + "=? AND " + Preview.HEIGHT_COLUMN + "=?";
 
-	private static final String TRIM_THUMBNAIL_TABLE_QUERY = "DELETE FROM " + Thumbnail.TABLE_NAME + //
-			" WHERE " + Thumbnail.ID_COLUMN + " IN (" + //
-			" SELECT " + Thumbnail.ID_COLUMN + " FROM " + Thumbnail.TABLE_NAME + //
-			" ORDER BY " + Thumbnail.ID_COLUMN + " DESC OFFSET ? ROWS)";
+	private static final String DOES_PREVIEW_EXIST_QUERY = "SELECT COUNT(" + Preview.FILE_NAME_COLUMN + ") AS c " + //
+			" FROM " + Preview.TABLE_NAME + //
+			" WHERE " + Preview.FILE_NAME_COLUMN + "=?";
+
+	private static final String GET_PREVIEW_ANY_SIZE_QUERY = "SELECT " + Preview.IMAGE_COLUMN + //
+			" FROM " + Preview.TABLE_NAME + //
+			" WHERE " + Preview.FILE_NAME_COLUMN + "=?";
+			
+	private static final String GET_MAX_PREVIEW_ID_QUERY = "SELECT MAX(" + Preview.ID_COLUMN + ") as max_id FROM " + Preview.TABLE_NAME;
+
+	private static final String TRIM_PREVIEW_TABLE_QUERY = "DELETE FROM " + Preview.TABLE_NAME + //
+			" WHERE " + Preview.ID_COLUMN + " < ?";
 
 	private static Logger logger = Logger.getLogger(DerbyDatabase.class.getSimpleName());
 	private Connection readConnection;
@@ -79,8 +85,8 @@ class DerbyDatabase implements DatabaseAccess {
 
 		final Set<String> tableNames = getAllTables();
 
-		if (!tableNames.contains(Thumbnail.TABLE_NAME)) {
-			createThumbnailsTable();
+		if (!tableNames.contains(Preview.TABLE_NAME)) {
+			createPreviewTable();
 		}
 	}
 
@@ -90,7 +96,9 @@ class DerbyDatabase implements DatabaseAccess {
 			readConnection = DriverManager.getConnection(aUrl);
 			writeConnection = DriverManager.getConnection(aUrl);
 		} catch (final InstantiationException | IllegalAccessException | ClassNotFoundException | SQLException aEx) {
-			logger.severe("Could not connect database: " + aEx.getMessage());
+			logger.log(Level.SEVERE, "Could not connect to database " + aUrl, aEx);
+			close();
+			
 			throw new IllegalStateException(aEx);
 		}
 	}
@@ -99,113 +107,187 @@ class DerbyDatabase implements DatabaseAccess {
 		final Set<String> tableNames = new HashSet<String>();
 
 		try {
-			final DatabaseMetaData metaData = readConnection.getMetaData();
-			final ResultSet rs = metaData.getTables(null, null, null, new String[] { "TABLE" });
-			while (rs.next()) {
-				tableNames.add(rs.getString("TABLE_NAME").toLowerCase());
+			synchronized (readConnection) {
+				final DatabaseMetaData metaData = readConnection.getMetaData();
+				try (final ResultSet rs = metaData.getTables(null, null, null, new String[] { "TABLE" })) {
+					while (rs.next()) {
+						tableNames.add(rs.getString("TABLE_NAME").toLowerCase());
+					}
+				}
 			}
 		} catch (final SQLException aEx) {
-			logger.severe("Could not obtain names of existing tables: " + aEx.getMessage());
+			logger.log(Level.SEVERE, "Could not obtain names of existing tables", aEx);
 			throw new IllegalStateException(aEx);
 		}
 
 		return tableNames;
 	}
 
-	private void createThumbnailsTable() {
+	private void createPreviewTable() {
 		try {
-			writeConnection.prepareStatement(CREATE_THUMBNAIL_TABLE).execute();
+			synchronized (writeConnection) {
+				try (final PreparedStatement statement = writeConnection.prepareStatement(CREATE_PREVIEW_TABLE)) {
+					statement.execute();
+				}
+			}
 		} catch (final SQLException aEx) {
-			logger.severe("Could not create thumbnails table: " + aEx.getMessage());
+			logger.log(Level.SEVERE, "Could not create previews table", aEx);
 			throw new IllegalStateException(aEx);
 		}
 	}
 
 	@Override
-	public void saveThumbnail(final ThumbnailKey aKey, final BufferedImage aThumbnail) {
-		logger.fine("Saving thumbnail for " + aKey);
-		synchronized (writeConnection) {
-			PreparedStatement statement = null;
-			try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-				ImageIO.write(aThumbnail, "png", baos);
-				baos.flush();
+	public void savePreview(final PreviewKey aKey, final BufferedImage aPreview) {
+		logger.fine("Saving preview for " + aKey);
+		try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+			ImageIO.write(aPreview, "png", baos);
+			baos.flush();
 
-				statement = writeConnection.prepareStatement(SAVE_THUMBNAIL_QUERY);
-				statement.setString(1, aKey.getFile());
-				statement.setInt(2, aKey.getWidth());
-				statement.setInt(3, aKey.getHeight());
-				statement.setBytes(4, baos.toByteArray());
+			synchronized (writeConnection) {
+				try (final PreparedStatement statement = writeConnection.prepareStatement(SAVE_PREVIEW_QUERY)) {
+					statement.setString(1, aKey.getFile());
+					statement.setInt(2, aKey.getWidth());
+					statement.setInt(3, aKey.getHeight());
+					statement.setBytes(4, baos.toByteArray());
 
-				statement.executeUpdate();
-			} catch (final SQLException | IOException aEx) {
-				logger.severe("Could not save thumbnail for " + aKey + ": " + aEx.getMessage());
-
-			} finally {
-				if (statement != null) {
-					try {
-						statement.close();
-					} catch (final SQLException aEx) {
-						// nothing to do
-					}
+					statement.executeUpdate();
 				}
 			}
+		} catch (final SQLException | IOException aEx) {
+			logger.log(Level.SEVERE, "Could not save preview for " + aKey, aEx);
 		}
 	}
 
 	@Override
-	public BufferedImage getThumbnail(final ThumbnailKey aKey) {
-		synchronized (readConnection) {
-			PreparedStatement statement = null;
-			ResultSet result = null;
+	public BufferedImage getPreview(final PreviewKey aKey) {
+		try {
+			synchronized (readConnection) {
+				try (final PreparedStatement statement = readConnection.prepareStatement(GET_PREVIEW_QUERY)) {
+					statement.setString(1, aKey.getFile());
+					statement.setInt(2, aKey.getWidth());
+					statement.setInt(3, aKey.getHeight());
+
+					try (final ResultSet result = statement.executeQuery()) {
+						if (!result.next()) {
+							return null;
+						} else {
+							final Blob blob = result.getBlob(Preview.IMAGE_COLUMN);
+							return ImageIO.read(blob.getBinaryStream());
+						}
+					}
+				}
+			}
+		} catch (final SQLException | IOException aEx) {
+			logger.log(Level.SEVERE, "Could not get preview for " + aKey, aEx);
+			return null;
+		}
+	}
+
+	@Override
+	public boolean doesPreviewExist(final String aFile) {
+		try {
+			synchronized (readConnection) {
+				try (final PreparedStatement statement = readConnection.prepareStatement(DOES_PREVIEW_EXIST_QUERY)) {
+					statement.setString(1, aFile);
+
+					try (final ResultSet result = statement.executeQuery()) {
+						if (!result.next()) {
+							return false;
+						} else {
+							return result.getInt("c") > 0;
+						}
+					}
+				}
+			}
+		} catch (final SQLException aEx) {
+			logger.log(Level.SEVERE, "Could not check whether preview exists for " + aFile, aEx);
+			return false;
+		}
+	}
+
+	@Override
+	public BufferedImage getPreviewAnySize(final String aFile) {
+		try {
+			synchronized (readConnection) {
+				try (final PreparedStatement statement = readConnection.prepareStatement(GET_PREVIEW_ANY_SIZE_QUERY)) {
+					statement.setString(1, aFile);
+
+					try (final ResultSet result = statement.executeQuery()) {
+						if (!result.next()) {
+							return null;
+						} else {
+							final Blob blob = result.getBlob(Preview.IMAGE_COLUMN);
+							return ImageIO.read(blob.getBinaryStream());
+						}
+					}
+				}
+			}
+		} catch (final SQLException | IOException aEx) {
+			logger.log(Level.SEVERE, "Could not get preview for " + aFile, aEx);
+			return null;
+		}
+	}
+
+	public void trim(final int aPreviewEntries) {
+		logger.finer("Trimming database to " + aPreviewEntries + " entries");
+
+		long maxId = 0L;
+		try {
+			synchronized (readConnection) {
+				try (final PreparedStatement statement = readConnection.prepareStatement(GET_MAX_PREVIEW_ID_QUERY)) {
+
+					try (final ResultSet result = statement.executeQuery()) {
+						if (!result.next()) {
+							logger.severe("Could not get result for maximal preview id");
+						} else {
+							maxId = result.getLong("max_id");
+						}
+					}
+				}
+			}
+		} catch (final SQLException aEx) {
+			logger.log(Level.SEVERE, "Error while getting maximal preview id", aEx);
+		}
+
+		if (maxId > 0L) {
+			long minSurvivingEntryId = maxId - aPreviewEntries;
+			logger.finer("Maximal preview id is " + maxId + ", thus deleting all entries with ids lower than " + minSurvivingEntryId);
+
 			try {
-				statement = readConnection.prepareStatement(GET_THUMBNAIL_QUERY);
-				statement.setString(1, aKey.getFile());
-				statement.setInt(2, aKey.getWidth());
-				statement.setInt(3, aKey.getHeight());
-
-				result = statement.executeQuery();
-				if (!result.next()) {
-					return null;
-				} else {
-					final Blob blob = result.getBlob(Thumbnail.IMAGE_COLUMN);
-					return ImageIO.read(blob.getBinaryStream());
-				}
-			} catch (final SQLException | IOException aEx) {
-				logger.severe("Could not get thumbnail for " + aKey + ": " + aEx.getMessage());
-				return null;
-			} finally {
-				try {
-					if (statement != null) {
-						statement.close();
+				synchronized (writeConnection) {
+					try (final PreparedStatement statement = writeConnection.prepareStatement(TRIM_PREVIEW_TABLE_QUERY)) {
+						statement.setLong(1, minSurvivingEntryId);
+						int affectedRows = statement.executeUpdate();
+						logger.fine("Trimming database to " + aPreviewEntries + " entries affected " + affectedRows + " rows");
 					}
-					if (result != null) {
-						result.close();
-					}
-				} catch (final SQLException aEx) {
-					// nothing to do
 				}
+			} catch (final SQLException aEx) {
+				logger.log(Level.SEVERE, "Trimming previews table in database failed", aEx);
 			}
 		}
 	}
 
-	public void trim(final int aThumbnailEntries) {
-		try {
-			final PreparedStatement statement = writeConnection.prepareStatement(TRIM_THUMBNAIL_TABLE_QUERY);
-			statement.setInt(1, aThumbnailEntries);
-			int affectedRows = statement.executeUpdate();
-			logger.fine("Trimming database to " + aThumbnailEntries + " entries affected " + affectedRows + " rows");
-		} catch (final SQLException aEx) {
-			logger.severe("Could not trim thumbnails table: " + aEx.getMessage());
-			throw new IllegalStateException(aEx);
-		}
-	}
 
 	@Override
 	public void close() {
-		try {
-			readConnection.close();
-		} catch (SQLException e) {
-			logger.severe("Could not close database readConnection");
+		if (readConnection != null) {
+			synchronized (readConnection) {
+				try {
+					readConnection.close();
+				} catch (SQLException e) {
+					logger.log(Level.SEVERE, "Could not close database read connection", e);
+				}
+			}
+		}
+
+		if (writeConnection != null) {
+			synchronized (writeConnection) {
+				try {
+					writeConnection.close();
+				} catch (SQLException e) {
+					logger.log(Level.SEVERE, "Could not close database write connection", e);
+				}
+			}
 		}
 	}
 }

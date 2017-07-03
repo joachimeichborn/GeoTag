@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 import joachimeichborn.geotag.model.PositionData;
 
 public abstract class AbstractTrackImprovementTask implements TrackImprovementTask {
-	final static Logger logger = Logger.getLogger(AbstractTrackImprovementTask.class.getSimpleName());
+	private final static Logger logger = Logger.getLogger(AbstractTrackImprovementTask.class.getSimpleName());
 
 	final ImproveTrackOptions options;
 

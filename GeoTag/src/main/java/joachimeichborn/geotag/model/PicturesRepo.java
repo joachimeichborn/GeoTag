@@ -30,9 +30,9 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 public class PicturesRepo implements PropertyChangeListener {
+	private static final Logger logger = Logger.getLogger(PicturesRepo.class.getSimpleName());
 	public static final String PICTURES_PROPERTY = "pictures";
 	private static final PicturesRepo INSTANCE = new PicturesRepo();
-	private static final Logger logger = Logger.getLogger(PicturesRepo.class.getSimpleName());
 
 	private final Map<String, Picture> pictures;
 	private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);

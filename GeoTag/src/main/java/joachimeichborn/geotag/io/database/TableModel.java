@@ -28,8 +28,8 @@ public class TableModel {
 	private TableModel() {
 	}
 
-	public static class Thumbnail {
-		public static final String TABLE_NAME = "thumbnail";
+	public static class Preview {
+		public static final String TABLE_NAME = "preview";
 		public static final String ID_COLUMN = "id";
 		public static final String FILE_NAME_COLUMN = "filename";
 		public static final String WIDTH_COLUM = "width";

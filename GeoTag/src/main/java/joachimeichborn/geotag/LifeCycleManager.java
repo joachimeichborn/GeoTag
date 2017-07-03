@@ -21,6 +21,7 @@ package joachimeichborn.geotag;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -60,6 +61,14 @@ public class LifeCycleManager {
 
 	@PostContextCreate
 	void postContextCreate(final IApplicationContext aAppContext, final Display aDisplay) {
+		if (!Files.exists(WORKING_DIR)) {
+			try {
+				Files.createDirectories(WORKING_DIR);
+			} catch (IOException e) {
+				logger.log(Level.SEVERE, "Could not create working dir " + WORKING_DIR, e);
+			}
+		}
+		
 		initializeLogging();
 
 		logger.fine("Starting up");

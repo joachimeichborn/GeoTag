@@ -21,6 +21,12 @@ package joachimeichborn.geotag.handlers;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,6 +46,38 @@ import joachimeichborn.geotag.model.Track;
 import joachimeichborn.geotag.model.TracksRepo;
 
 public class OpenTracksHandler {
+	private static final class TrackReader implements Runnable {
+		private final IProgressMonitor monitor;
+		private final Path trackFile;
+
+		private TrackReader(final IProgressMonitor aMonitor, final Path aTrackFile) {
+			monitor = aMonitor;
+			trackFile = aTrackFile;
+		}
+
+		@Override
+		public void run() {
+			logger.info("Reading track from " + trackFile.getFileName());
+
+			try {
+				final String extension = FilenameUtils.getExtension(trackFile.getFileName().toString());
+				final TrackFileFormat format = TrackFileFormat.getByExtension(extension.toLowerCase());
+
+				final TrackParser parser = format.getParser();
+				final Track track = parser.read(trackFile);
+				if (track != null) {
+					TracksRepo.getInstance().addTrack(track);
+				}
+
+				logger.info("Completed reading track " + trackFile.getFileName());
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Failed to read track from " + trackFile.getFileName(), e);
+			}
+
+			monitor.worked(1);
+		}
+	}
+
 	private static final Logger logger = Logger.getLogger(OpenTracksHandler.class.getSimpleName());
 
 	@Execute
@@ -60,37 +98,45 @@ public class OpenTracksHandler {
 	}
 
 	public static void openTracks(final String aPath, final String[] aFiles) {
-		final TracksRepo tracksRepo = TracksRepo.getInstance();
-
 		final Job job = new Job("Reading tracks") {
 			@Override
 			protected IStatus run(final IProgressMonitor aMonitor) {
 				aMonitor.beginTask("Reading " + aFiles.length + " tracks", aFiles.length);
 
+				int threads = 2 * Runtime.getRuntime().availableProcessors();
+				logger.fine("Using " + threads + " cores for loading tracks");
+
+				final ExecutorService threadPool =Executors.newFixedThreadPool(threads);
+
+				final List<Future<?>> futures = new LinkedList<>();
+
 				for (final String file : aFiles) {
-					logger.info("Reading track from " + file);
-
-					try {
-						final String extension = FilenameUtils.getExtension(file);
-						final TrackFileFormat format = TrackFileFormat.getByExtension(extension.toLowerCase());
-
-						final Path trackFile = Paths.get(aPath, file);
-						final TrackParser parser = format.getParser();
-						final Track track = parser.read(trackFile);
-						if (track != null) {
-							tracksRepo.addTrack(track);
-						}
-						
-						logger.info("Reading track completed");
-					} catch (Exception e) {
-						logger.log(Level.SEVERE, "Failed to read track from " + file, e);
-					}
-
-					aMonitor.worked(1);
+					final Path trackFile = Paths.get(aPath, file);
+					futures.add(threadPool.submit(new TrackReader(aMonitor, trackFile)));
 				}
 
+				final IStatus status = waitForAllTracksToBeRead(futures);
+
 				aMonitor.done();
-				logger.fine("Reading " + aFiles.length + " tracks completed");
+				return status;
+			}
+
+			private IStatus waitForAllTracksToBeRead(final List<Future<?>> futures) {
+				for (final Future<?> future : futures) {
+					try {
+						future.get();
+					} catch (InterruptedException e) {
+						logger.log(Level.FINE, "Waiting for track to be loaded was interrupted", e);
+						Thread.currentThread().interrupt();
+						return Status.CANCEL_STATUS;
+					} catch (ExecutionException e) {
+						logger.log(Level.FINE, "Reading track failed", e);
+						Thread.currentThread().interrupt();
+						return Status.CANCEL_STATUS;
+					}
+				}
+				
+				logger.info("Reading " + futures.size() + " tracks completed");
 				return Status.OK_STATUS;
 			}
 		};

@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package joachimeichborn.geotag.refinetracks;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -42,14 +43,14 @@ public class TrackRefiner {
 		tasks = new LinkedList<>();
 		tasks.add(new RemoveDuplicatePositionsTask(improvementOptions));
 		tasks.add(new FilterPositionsByPairwiseDistanceTask(improvementOptions));
-		tasks.add(new FilterPositionsByAccuracyComparisonTask(improvementOptions));
+		tasks.add(new ReplacePositionsByAccuracyComparisonTask(improvementOptions));
 		tasks.add(new FilterPositionsByAccuracyRadiusTask(improvementOptions));
 		tasks.add(new RemoveIrrelevantPositionsTask(improvementOptions));
 		tasks.add(new InterpolatePositionsTask(improvementOptions));
 	}
 
 	public Track refine() {
-		final List<PositionData> positions = new LinkedList<PositionData>();
+		final List<PositionData> positions = new ArrayList<PositionData>();
 
 		for (final Track track : tracks) {
 			positions.addAll(track.getPositions());

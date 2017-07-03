@@ -22,7 +22,7 @@ public class FilterPositionsByPairwiseDistanceTaskTest {
 		}
 		{
 			final ImproveTrackOptionsBuilder options = new ImproveTrackOptionsBuilder()
-					.setFilterByAccuracyComparison(false);
+					.setReplaceByAccuracyComparison(false);
 			data.add(new Object[] { options.build(), false });
 		}
 		return data.toArray(new Object[0][0]);

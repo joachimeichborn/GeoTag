@@ -96,7 +96,7 @@ public class TrackImprovementView {
 
 	private Button removeDuplicates;
 	private Button filterByPairwiseDistance;
-	private Button filterByAccuracyComparison;
+	private Button replaceByAccuracyComparison;
 	private Button filterByAccuracyRadius;
 	private Button removeIrrelevantPositions;
 	private Button interpolatePositions;
@@ -237,7 +237,7 @@ public class TrackImprovementView {
 		builder.setRemoveDuplicates(removeDuplicates.getSelection());
 		builder.setFilterByPairwiseDistance(filterByPairwiseDistance.getSelection());
 		builder.setDistanceFactor(getDistanceFactor(distanceFactorScale.getSelection()));
-		builder.setFilterByAccuracyComparison(filterByAccuracyComparison.getSelection());
+		builder.setReplaceByAccuracyComparison(replaceByAccuracyComparison.getSelection());
 		builder.setFilterByAccuracyRadius(filterByAccuracyRadius.getSelection());
 		builder.setRadiusThreshold(getRadiusThreshold(radiusThresholdScale.getSelection()));
 		builder.setRemoveIrrelevantPositions(removeIrrelevantPositions.getSelection());
@@ -402,9 +402,9 @@ public class TrackImprovementView {
 			}
 		});
 
-		filterByAccuracyComparison = new Button(aParent, SWT.CHECK);
-		filterByAccuracyComparison.setText("Filter by Accuracy Comparison");
-		filterByAccuracyComparison.setSelection(true);
+		replaceByAccuracyComparison = new Button(aParent, SWT.CHECK);
+		replaceByAccuracyComparison.setText("Replace by Accuracy Comparison");
+		replaceByAccuracyComparison.setSelection(true);
 
 		filterByAccuracyRadius = new Button(aParent, SWT.CHECK);
 		filterByAccuracyRadius.setText("Filter by Accuracy Radius");
@@ -452,7 +452,7 @@ public class TrackImprovementView {
 		removeDuplicates.setEnabled(!improvementInProgress);
 		filterByPairwiseDistance.setEnabled(!improvementInProgress);
 		distanceFactorScale.setEnabled(!improvementInProgress);
-		filterByAccuracyComparison.setEnabled(!improvementInProgress);
+		replaceByAccuracyComparison.setEnabled(!improvementInProgress);
 		filterByAccuracyRadius.setEnabled(!improvementInProgress);
 		radiusThresholdScale.setEnabled(!improvementInProgress);
 		removeIrrelevantPositions.setEnabled(!improvementInProgress);
