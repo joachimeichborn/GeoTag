@@ -63,12 +63,12 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableColumn;
 
+import joachimeichborn.geotag.misc.ColorPreviewImageGenerator;
 import joachimeichborn.geotag.model.Track;
 import joachimeichborn.geotag.model.TracksRepo;
 import joachimeichborn.geotag.model.selections.TrackSelection;
 import joachimeichborn.geotag.ui.labelprovider.TrackViewerObservableLabelProvider;
 import joachimeichborn.geotag.ui.tablecomparators.TrackViewerComparator;
-import joachimeichborn.geotag.utils.ColorPreviewImageGenerator;
 
 public class TracksView {
 	private static final String TRACKS_PART_ID = "geotag.part.tracks";

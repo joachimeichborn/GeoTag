@@ -29,7 +29,7 @@ import java.util.List;
 
 import org.eclipse.swt.graphics.RGB;
 
-import joachimeichborn.geotag.utils.ColorGenerator;
+import joachimeichborn.geotag.misc.ColorGenerator;
 
 /**
  * Representation of a track which is basically a list of positions. The

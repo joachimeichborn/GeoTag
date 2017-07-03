@@ -73,6 +73,8 @@ import org.eclipse.swt.widgets.TableColumn;
 import joachimeichborn.geotag.handlers.OpenPicturesHandler;
 import joachimeichborn.geotag.io.jpeg.PictureAnnotationException;
 import joachimeichborn.geotag.io.jpeg.PictureMetadataWriter;
+import joachimeichborn.geotag.misc.ColorPreviewImageGenerator;
+import joachimeichborn.geotag.misc.PictureAnnotator;
 import joachimeichborn.geotag.model.Picture;
 import joachimeichborn.geotag.model.PicturesRepo;
 import joachimeichborn.geotag.model.Track;
@@ -84,8 +86,6 @@ import joachimeichborn.geotag.ui.labelprovider.PictureViewerObservableLabelProvi
 import joachimeichborn.geotag.ui.labelprovider.TrackViewerObservableLabelProvider;
 import joachimeichborn.geotag.ui.tablecomparators.PictureViewerComparator;
 import joachimeichborn.geotag.ui.tablecomparators.TrackViewerComparator;
-import joachimeichborn.geotag.utils.ColorPreviewImageGenerator;
-import joachimeichborn.geotag.utils.PictureAnnotator;
 import net.miginfocom.swt.MigLayout;
 
 public class PositionAnnotationView {

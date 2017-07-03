@@ -36,8 +36,8 @@ import javax.imageio.ImageIO;
 import org.jxmapviewer.util.GraphicsUtilities;
 
 import joachimeichborn.geotag.io.jpeg.PictureMetadataReader;
-import joachimeichborn.geotag.utils.LifoBlockingDeque;
-import joachimeichborn.geotag.utils.PictureOrientation;
+import joachimeichborn.geotag.misc.LifoBlockingDeque;
+import joachimeichborn.geotag.misc.PictureOrientation;
 
 /**
  * Create requested previews

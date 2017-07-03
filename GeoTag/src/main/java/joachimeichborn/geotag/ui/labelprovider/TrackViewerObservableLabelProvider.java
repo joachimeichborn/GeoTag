@@ -26,8 +26,8 @@ import org.eclipse.jface.databinding.viewers.ObservableMapLabelProvider;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.RGB;
 
+import joachimeichborn.geotag.misc.ColorPreviewImageGenerator;
 import joachimeichborn.geotag.model.Track;
-import joachimeichborn.geotag.utils.ColorPreviewImageGenerator;
 
 public class TrackViewerObservableLabelProvider extends ObservableMapLabelProvider {
 	public static final String NAME_COLUMN = "Name";

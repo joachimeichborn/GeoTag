@@ -71,6 +71,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import joachimeichborn.geotag.handlers.OpenTracksHandler;
 import joachimeichborn.geotag.io.TrackFileFormat;
 import joachimeichborn.geotag.io.writer.TrackWriter;
+import joachimeichborn.geotag.misc.ColorPreviewImageGenerator;
 import joachimeichborn.geotag.model.Track;
 import joachimeichborn.geotag.model.TracksRepo;
 import joachimeichborn.geotag.model.selections.TrackSelection;
@@ -78,7 +79,6 @@ import joachimeichborn.geotag.refinetracks.ImproveTrackOptions.ImproveTrackOptio
 import joachimeichborn.geotag.refinetracks.TrackRefiner;
 import joachimeichborn.geotag.ui.labelprovider.TrackViewerObservableLabelProvider;
 import joachimeichborn.geotag.ui.tablecomparators.TrackViewerComparator;
-import joachimeichborn.geotag.utils.ColorPreviewImageGenerator;
 import net.miginfocom.swt.MigLayout;
 
 public class TrackImprovementView {
