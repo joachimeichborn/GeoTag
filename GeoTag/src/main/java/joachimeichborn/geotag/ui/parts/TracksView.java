@@ -153,7 +153,8 @@ public class TracksView {
 					}
 					case SWT.DEL: {
 						final TrackSelection selectedTracks = new TrackSelection(trackViewer.getStructuredSelection());
-						tracksRepo.removeTracks(selectedTracks.getSelection());
+						trackViewer.setSelection(StructuredSelection.EMPTY);
+ 						tracksRepo.removeTracks(selectedTracks.getSelection());
 						break;
 					}
 				}

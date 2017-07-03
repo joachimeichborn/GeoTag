@@ -58,7 +58,7 @@ public class PicturesRepo implements PropertyChangeListener {
 	}
 
 	public void removePictures(final List<Picture> aPicturesToRemove) {
-		LOGGER.fine("Removing " + aPicturesToRemove + " pictures from picture storage");
+		LOGGER.fine("Removing " + aPicturesToRemove.size() + " pictures from picture storage");
 		for (final Picture picture : aPicturesToRemove) {
 			if (pictures.remove(picture.getFile().toString()) == null) {
 				LOGGER.fine("Could not remove picture " + picture);

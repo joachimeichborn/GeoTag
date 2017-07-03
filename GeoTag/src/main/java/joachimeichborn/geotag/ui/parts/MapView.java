@@ -338,7 +338,7 @@ public class MapView {
 			mapViewer.zoomToBestFit(new HashSet<GeoPosition>(geoPositions), 0.7);
 		}
 		mapViewer.repaint();
-		LOGGER.fine("Finished drawing " + latestGeoPositions.size() + " positions");
+		LOGGER.fine("Finished drawing " + latestGeoPositions.size() + " distinct positions");
 	}
 
 	public void setLatestGeoPositions(final Set<GeoPosition> aGeoPositions) {

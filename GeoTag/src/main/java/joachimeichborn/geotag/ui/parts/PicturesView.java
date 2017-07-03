@@ -152,6 +152,7 @@ public class PicturesView implements PreviewConsumer {
 					}
 					case SWT.DEL: {
 						final PictureSelection selectedPictures = new PictureSelection(pictureViewer.getStructuredSelection());
+						pictureViewer.setSelection(StructuredSelection.EMPTY);
 						picturesRepo.removePictures(selectedPictures.getSelection());
 						break;
 					}
