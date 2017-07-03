@@ -49,7 +49,7 @@ public class PreviewCreator {
 	 * Worker class that computes previews. When a new preview is ready, the
 	 * {@link PreviewConsumer} is informed about it
 	 */
-	private static class Worker implements Runnable {
+	static class Worker implements Runnable {
 		private final PreviewKey cacheKey;
 		private final boolean rotatable;
 		private final PreviewConsumer previewConsumer;
