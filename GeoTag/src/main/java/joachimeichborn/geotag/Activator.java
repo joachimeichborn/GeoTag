@@ -17,34 +17,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package joachimeichborn.geotag.model.selections;
+package joachimeichborn.geotag;
 
-import java.util.Collections;
-import java.util.List;
+import org.eclipse.e4.core.di.InjectorFactory;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
 
-import org.eclipse.jface.viewers.IStructuredSelection;
+import joachimeichborn.geotag.io.database.DatabaseAccess;
+import joachimeichborn.geotag.io.database.DerbyDatabase;
 
-import joachimeichborn.geotag.model.Track;
+public class Activator implements BundleActivator {
 
-public class TrackSelection implements Selection<Track> {
-	private List<Track> selection;
-
-	public TrackSelection() {
-		this(Collections.emptyList());
-	}
-
-	@SuppressWarnings("unchecked")
-	public TrackSelection(final IStructuredSelection aSelection) {
-		this((List<Track>) aSelection.toList());
-	}
-
-	public TrackSelection(final List<Track> aTracks) {
-		selection = Collections.unmodifiableList(aTracks);
+	@Override
+	public void start(final BundleContext aContext) throws Exception {
+		InjectorFactory.getDefault().addBinding(DatabaseAccess.class).implementedBy(DerbyDatabase.class);
 	}
 
 	@Override
-	public List<Track> getSelection() {
-		return selection;
+	public void stop(final BundleContext aContext) throws Exception {
 	}
-
 }

@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
+import javax.inject.Inject;
 
 import org.eclipse.swt.widgets.Display;
 import org.jxmapviewer.viewer.DefaultWaypoint;
@@ -48,6 +49,8 @@ import joachimeichborn.geotag.ui.map.ImageWaypointRenderer;
 import joachimeichborn.geotag.ui.parts.MapView;
 
 public class PicturePainterHandler extends AbstractPainterHandler<Picture>implements PreviewConsumer {
+	private static final Logger LOGGER = Logger.getLogger(PicturePainterHandler.class.getSimpleName());
+
 	private class ThumbnailUpdater implements Runnable {
 		@Override
 		public void run() {
@@ -61,36 +64,43 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 		}
 	}
 
-	private static final Logger logger = Logger.getLogger(PicturePainterHandler.class.getSimpleName());
 	private static final String PICTURE_PLACEMARK = "picture_placemark.png";
 	private static final float DIMENSION_FACTOR = 0.75f;
 	private static final int DIRECT_RERENDER_THRESHOLD = 30;
 	private static final int LONGER_DIMENSION = 160;
 
-	private final Set<String> requestedImages = Collections.synchronizedSet(new HashSet<>());
-	private final PreviewRepo previewRepo;
-	private ImageWaypointRenderer imageRenderer;
-	private ScheduledExecutorService thumbnailUpdateExecutor;
+	@Inject
+	private PreviewRepo previewRepo;
+
+	private final Set<String> requestedImages;
+	private final ImageWaypointRenderer imageRenderer;
+	private final ScheduledExecutorService thumbnailUpdateExecutor;
 	private ScheduledFuture<?> thumbnailUpdater;
+
 
 	public PicturePainterHandler(final MapView aMapView) {
 		super(aMapView);
 
-		previewRepo = PreviewRepo.getInstance();
+		imageRenderer = new ImageWaypointRenderer(getPicturePlacemark());
+		requestedImages = Collections.synchronizedSet(new HashSet<>());
 		thumbnailUpdateExecutor = Executors.newSingleThreadScheduledExecutor();
 		thumbnailUpdater = thumbnailUpdateExecutor.schedule(new ThumbnailUpdater(), 0, TimeUnit.MILLISECONDS);
-
+	}
+	
+	private BufferedImage getPicturePlacemark() {
 		final URL picturePlacemarkResource = ImageWaypointRenderer.class.getResource(PICTURE_PLACEMARK);
 		if (picturePlacemarkResource != null) {
 			try {
-				final BufferedImage picturePlacemark = ImageIO.read(picturePlacemarkResource);
-				imageRenderer = new ImageWaypointRenderer(picturePlacemark);
+				return ImageIO.read(picturePlacemarkResource);
 			} catch (IOException e) {
-				logger.severe("Could not load picture placemark: " + e.getMessage());
+				LOGGER.severe("Could not load picture placemark: " + e.getMessage());
 			}
 		} else {
-			logger.severe("Could not obtain picture placemark resource '" + PICTURE_PLACEMARK + "'");
+			LOGGER.severe("Could not obtain picture placemark resource '" + PICTURE_PLACEMARK + "'");
 		}
+
+		throw new IllegalStateException("Could not load picture placemark");
+		
 	}
 
 	@Override
@@ -110,23 +120,17 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 					final Coordinates coordinates = picture.getCoordinates();
 
 					if (coordinates != null) {
-						final PreviewKey key = new PreviewKey(picture.getFile().toString(), LONGER_DIMENSION,
-								shorterDimension);
+						final PreviewKey key = new PreviewKey(picture.getFile().toString(), LONGER_DIMENSION, shorterDimension);
 						final BufferedImage thumbnail = previewRepo.getPreview(key, true, this);
-						synchronized (requestedImages) {
-							requestedImages.add(key.getFile());
-						}
+						requestedImages.add(key.getFile());
 
-						if (thumbnail != null) {
-							final WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
-							final GeoPosition geoPosition = new GeoPosition(coordinates.getLatitude(),
-									coordinates.getLongitude());
-							geoPositions.add(geoPosition);
+						final WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
+						final GeoPosition geoPosition = new GeoPosition(coordinates.getLatitude(), coordinates.getLongitude());
+						geoPositions.add(geoPosition);
 
-							waypointPainter.setWaypoints(Collections.singleton(new DefaultWaypoint(geoPosition)));
-							waypointPainter.setRenderer(new ImageWaypointRenderer(thumbnail));
-							painters.add(waypointPainter);
-						}
+						waypointPainter.setWaypoints(Collections.singleton(new DefaultWaypoint(geoPosition)));
+						waypointPainter.setRenderer(new ImageWaypointRenderer(thumbnail));
+						painters.add(waypointPainter);
 					}
 				}
 			} else {
@@ -136,8 +140,7 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 					final Coordinates coordinates = picture.getCoordinates();
 
 					if (coordinates != null) {
-						final GeoPosition geoPosition = new GeoPosition(coordinates.getLatitude(),
-								coordinates.getLongitude());
+						final GeoPosition geoPosition = new GeoPosition(coordinates.getLatitude(), coordinates.getLongitude());
 						geoPositions.add(geoPosition);
 						waypoints.add(new DefaultWaypoint(geoPosition));
 					}
@@ -153,30 +156,18 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 
 	@Override
 	public void previewReady(PreviewKey aKey, BufferedImage aImage) {
-		boolean correctImage = false;
-		synchronized (requestedImages) {
-			final boolean current = requestedImages.remove(aKey.getFile());
-
-			// check whether the image that was computed is still of use
-			if (current) {
-				if (Math.max(aImage.getWidth(), aImage.getHeight()) == (int) (DIMENSION_FACTOR * LONGER_DIMENSION)) {
-					previewRepo.getPreview(aKey, true, this);
-					requestedImages.add(aKey.getFile());
-				} else {
-					correctImage = true;
-				}
-			}
-		}
-
-		if (correctImage) {
-			requestRepaint();
+		// check whether we still have an interest in the previously requested image
+		if (requestedImages.contains(aKey.getFile())) {
+			if (Math.max(aImage.getWidth(), aImage.getHeight()) == LONGER_DIMENSION) {
+				requestedImages.remove(aKey.getFile());
+				requestRepaint();
+			} 
 		}
 	}
 
 	public void requestRepaint() {
 		final int delay = selectedItems.size() > DIRECT_RERENDER_THRESHOLD ? 3_000 : 0;
-		if (thumbnailUpdater.getDelay(TimeUnit.MILLISECONDS) > delay
-				|| thumbnailUpdater.getDelay(TimeUnit.MILLISECONDS) < 0) {
+		if (thumbnailUpdater.getDelay(TimeUnit.MILLISECONDS) > delay || thumbnailUpdater.getDelay(TimeUnit.MILLISECONDS) < 0) {
 			thumbnailUpdater.cancel(false);
 			thumbnailUpdater = thumbnailUpdateExecutor.schedule(new ThumbnailUpdater(), delay, TimeUnit.MILLISECONDS);
 		}

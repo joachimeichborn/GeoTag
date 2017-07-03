@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package joachimeichborn.geotag.ui.parts;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -57,15 +56,14 @@ import joachimeichborn.geotag.ui.labelprovider.PositionsViewerLabelProvider;
 import joachimeichborn.geotag.ui.tablecomparators.PositionViewerComparator;
 
 public class TrackDetailView {
+	private static final Logger LOGGER = Logger.getLogger(TrackDetailView.class.getSimpleName());
+
 	private static final String[] COLUMNS = new String[] { PositionsViewerLabelProvider.NAME_COLUMN,
 			PositionsViewerLabelProvider.ACCURACY_COLUMN, PositionsViewerLabelProvider.TIMESTAMP_COLUMN,
 			PositionsViewerLabelProvider.COORDINATES_COLUMN };
 	private static final String SELECTED_POSIITONS = "%d position(s) selected";
-	private static final Logger logger = Logger.getLogger(TrackDetailView.class.getSimpleName());
 
-	@Inject
-	private ESelectionService selectionService;
-
+	private final ESelectionService selectionService;
 	private TableViewer positionsViewer;
 	private Label nameLabel;
 	private Label positionCountLabel;
@@ -73,6 +71,11 @@ public class TrackDetailView {
 
 	private Label selectedPositionsLabel;
 
+	@Inject
+	public TrackDetailView(final ESelectionService aSelectionService) {
+		selectionService = aSelectionService;
+	}
+	
 	@PostConstruct
 	public void createPartControl(final Composite aParent) {
 		aParent.setLayout(new GridLayout(1, false));
@@ -119,8 +122,8 @@ public class TrackDetailView {
 		positionsViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-				logger.fine("Selected " + selection.size() + " positions");
-				final PositionSelection positions = new PositionSelection(selection.toList());
+				LOGGER.fine("Selected " + selection.size() + " positions");
+				final PositionSelection positions = new PositionSelection(selection);
 				selectionService.setSelection(positions);
 			}
 		});
@@ -158,7 +161,7 @@ public class TrackDetailView {
 				positionsViewer.refresh();
 			}
 			
-			final PositionSelection positions = new PositionSelection(Collections.emptyList());
+			final PositionSelection positions = new PositionSelection();
 			selectionService.setSelection(positions);
 		}
 	}

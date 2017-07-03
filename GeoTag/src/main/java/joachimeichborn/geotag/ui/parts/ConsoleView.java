@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.inject.Inject;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
@@ -33,8 +34,13 @@ import org.eclipse.swt.widgets.Display;
 import joachimeichborn.geotag.logging.ConsoleViewAppender;
 
 public class ConsoleView {
+	private final ConsoleViewAppender logWriter;
 	private StyledText console;
-	private ConsoleViewAppender logWriter;
+
+	@Inject
+	public ConsoleView(final ConsoleViewAppender aLogWriter) {
+		logWriter = aLogWriter;
+	}
 
 	@PostConstruct
 	public void createPartControl(final Composite aParent) {
@@ -43,7 +49,7 @@ public class ConsoleView {
 		console = new StyledText(aParent, SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
 		console.setEditable(false);
 
-		ConsoleViewAppender.getInstance().setConsole(console, Display.getCurrent());
+		logWriter.setConsole(console, Display.getCurrent());
 	}
 
 	@PreDestroy

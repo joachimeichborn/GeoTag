@@ -40,9 +40,9 @@ import org.apache.commons.imaging.formats.tiff.constants.TiffTagConstants;
 import org.apache.commons.imaging.formats.tiff.fieldtypes.FieldType;
 import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
 
+import joachimeichborn.geotag.misc.PictureOrientation;
 import joachimeichborn.geotag.model.Coordinates;
 import joachimeichborn.geotag.model.Geocoding;
-import joachimeichborn.geotag.utils.PictureOrientation;
 
 /**
  * Representation of EXIF image meta data

@@ -36,8 +36,8 @@ import javax.imageio.ImageIO;
 import org.jxmapviewer.util.GraphicsUtilities;
 
 import joachimeichborn.geotag.io.jpeg.PictureMetadataReader;
-import joachimeichborn.geotag.utils.LifoBlockingDeque;
-import joachimeichborn.geotag.utils.PictureOrientation;
+import joachimeichborn.geotag.misc.LifoBlockingDeque;
+import joachimeichborn.geotag.misc.PictureOrientation;
 
 /**
  * Create requested previews
@@ -49,7 +49,7 @@ public class PreviewCreator {
 	 * Worker class that computes previews. When a new preview is ready, the
 	 * {@link PreviewConsumer} is informed about it
 	 */
-	private static class Worker implements Runnable {
+	static class Worker implements Runnable {
 		private final PreviewKey cacheKey;
 		private final boolean rotatable;
 		private final PreviewConsumer previewConsumer;
@@ -119,6 +119,7 @@ public class PreviewCreator {
 				break;
 			}
 
+			//TODO: shouldn't be an observer given here waiting for the complete picture if necessary?
 			g.drawImage(preview, BORDER_SIZE, BORDER_SIZE, scaledDim.getWidth() - BORDER_SIZE,
 					scaledDim.getHeight() - BORDER_SIZE, 0, 0, scaledDim.getWidth() - 2 * BORDER_SIZE,
 					scaledDim.getHeight() - 2 * BORDER_SIZE, Color.BLACK, null);

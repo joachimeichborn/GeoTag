@@ -49,10 +49,12 @@ public class OpenTracksHandler {
 	private static final class TrackReader implements Runnable {
 		private final IProgressMonitor monitor;
 		private final Path trackFile;
+		private final TracksRepo tracksRepo;
 
-		private TrackReader(final IProgressMonitor aMonitor, final Path aTrackFile) {
+		private TrackReader(final IProgressMonitor aMonitor, final Path aTrackFile, final TracksRepo aTracksRepo) {
 			monitor = aMonitor;
 			trackFile = aTrackFile;
+			tracksRepo = aTracksRepo;
 		}
 
 		@Override
@@ -66,7 +68,7 @@ public class OpenTracksHandler {
 				final TrackParser parser = format.getParser();
 				final Track track = parser.read(trackFile);
 				if (track != null) {
-					TracksRepo.getInstance().addTrack(track);
+					tracksRepo.addTrack(track);
 				}
 
 				logger.info("Completed reading track " + trackFile.getFileName());
@@ -81,7 +83,7 @@ public class OpenTracksHandler {
 	private static final Logger logger = Logger.getLogger(OpenTracksHandler.class.getSimpleName());
 
 	@Execute
-	public static void execute(final Shell aShell) {
+	public static void execute(final Shell aShell, final TracksRepo aTracksRepo) {
 		final FileDialog openDialog = new FileDialog(aShell, SWT.MULTI | SWT.OPEN);
 		openDialog.setFilterExtensions(new String[] { "*.kml;*.kmz;*.gpx" });
 		openDialog.setFilterNames(new String[] { "Track files (KML, KMZ or GPX)" });
@@ -93,11 +95,11 @@ public class OpenTracksHandler {
 			final String path = openDialog.getFilterPath();
 
 			logger.fine("Reading " + fileNames.length + " tracks from " + path + " ...");
-			openTracks(path, fileNames);
+			openTracks(path, fileNames, aTracksRepo);
 		}
 	}
 
-	public static void openTracks(final String aPath, final String[] aFiles) {
+	public static void openTracks(final String aPath, final String[] aFiles, final TracksRepo aTracksRepo) {
 		final Job job = new Job("Reading tracks") {
 			@Override
 			protected IStatus run(final IProgressMonitor aMonitor) {
@@ -112,7 +114,7 @@ public class OpenTracksHandler {
 
 				for (final String file : aFiles) {
 					final Path trackFile = Paths.get(aPath, file);
-					futures.add(threadPool.submit(new TrackReader(aMonitor, trackFile)));
+					futures.add(threadPool.submit(new TrackReader(aMonitor, trackFile, aTracksRepo)));
 				}
 
 				final IStatus status = waitForAllTracksToBeRead(futures);

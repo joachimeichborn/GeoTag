@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -70,9 +71,11 @@ import org.eclipse.swt.widgets.Scale;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableColumn;
 
-import joachimeichborn.geotag.handlers.OpenPicturesHandler;
+import joachimeichborn.geotag.handlers.PictureLoader;
 import joachimeichborn.geotag.io.jpeg.PictureAnnotationException;
 import joachimeichborn.geotag.io.jpeg.PictureMetadataWriter;
+import joachimeichborn.geotag.misc.ColorPreviewImageGenerator;
+import joachimeichborn.geotag.misc.PictureAnnotator;
 import joachimeichborn.geotag.model.Picture;
 import joachimeichborn.geotag.model.PicturesRepo;
 import joachimeichborn.geotag.model.Track;
@@ -84,15 +87,13 @@ import joachimeichborn.geotag.ui.labelprovider.PictureViewerObservableLabelProvi
 import joachimeichborn.geotag.ui.labelprovider.TrackViewerObservableLabelProvider;
 import joachimeichborn.geotag.ui.tablecomparators.PictureViewerComparator;
 import joachimeichborn.geotag.ui.tablecomparators.TrackViewerComparator;
-import joachimeichborn.geotag.utils.ColorPreviewImageGenerator;
-import joachimeichborn.geotag.utils.PictureAnnotator;
 import net.miginfocom.swt.MigLayout;
 
 public class PositionAnnotationView {
 	private static final int MINIMAL_GRID_HEIGHT = 100;
 	private static final String NON_ANNOTATED_PICTURES_MSG = "%d pictures could not be mapped to a position";
 	private static final String ANNOTATED_PICTURES_MSG = "%d pictures successfully annotated";
-	private static final String PICTURE_SELECTION_MSG = "Selected %d pictures with %d position information";
+	private static final String PICTURE_SELECTION_MSG = "Selected %d pictures, %d of those already contain position information";
 	private static final String TRACK_SELECTION_MSG = "Selected %d tracks with %d positions";
 
 	private class AnnotationViewerSelectionListener implements ISelectionChangedListener {
@@ -101,7 +102,7 @@ public class PositionAnnotationView {
 		public void selectionChanged(final SelectionChangedEvent event) {
 			final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 			logger.fine("Selected " + selection.size() + " pictures");
-			selectionService.setSelection(new PictureSelection(selection.toList()));
+			selectionService.setSelection(new PictureSelection(selection));
 		}
 	}
 
@@ -111,22 +112,14 @@ public class PositionAnnotationView {
 	private static final String[] PICTURE_VIEWER_COLUMNS = new String[] { PictureViewerLabelProvider.NAME_COLUMN,
 			PictureViewerLabelProvider.TIME_COLUMN, PictureViewerLabelProvider.COORDINATES_COLUMN };
 
-	@Inject
-	private ESelectionService selectionService;
-
-	@Inject
-	private IEclipseContext eclipseContext;
-
-	@Inject
-	private MDirtyable dirtyable;
-
-	@Inject
-	private static UISynchronize sync;
-
+	private final ESelectionService selectionService;
+	private final IEclipseContext eclipseContext;
+	private final MDirtyable dirtyable;
+	private final UISynchronize sync;
 	private TableViewer trackViewer;
 	private TableViewer pictureViewer;
-	private final List<Track> selectedTracks;
-	private final List<Picture> selectedPictures;
+	private TrackSelection selectedTracks;
+	private PictureSelection selectedPictures;
 	private Label selectedTracksLabel;
 	private Label selectedPicturesLabel;
 	private Button computeAnnotationButton;
@@ -147,16 +140,21 @@ public class PositionAnnotationView {
 	private final TracksRepo tracksRepo;
 	private boolean annotationInProgress;
 
-	public PositionAnnotationView() {
-		selectedTracks = new LinkedList<>();
-		selectedPictures = new LinkedList<>();
+	@Inject
+	public PositionAnnotationView(final TracksRepo aTracksRepo, final PicturesRepo aPicturesRepo, final ESelectionService aSelectionService, final IEclipseContext aEclipseContext, final MDirtyable aDirtyable, final UISynchronize aSync) {
+		tracksRepo = aTracksRepo;
+		picturesRepo = aPicturesRepo;
+		selectionService = aSelectionService;
+		eclipseContext = aEclipseContext;
+		dirtyable = aDirtyable;
+		sync = aSync;
+		
+		selectedTracks = new TrackSelection();
+		selectedPictures = new PictureSelection();
 
 		final Display display = Display.getCurrent();
 		registry = new ImageRegistry(display);
 		colorPreviewGenerator = new ColorPreviewImageGenerator(registry, display);
-
-		tracksRepo = TracksRepo.getInstance();
-		picturesRepo = PicturesRepo.getInstance();
 	}
 
 	@PostConstruct
@@ -286,42 +284,11 @@ public class PositionAnnotationView {
 	private void initializeUpperPane(final Composite aParent) {
 		aParent.setLayout(new GridLayout(2, false));
 
-		new Label(aParent, SWT.NONE).setText("Select tracks");
 		new Label(aParent, SWT.NONE).setText("Select Pictures");
+		new Label(aParent, SWT.NONE).setText("Select tracks");
 
 		final GridData viewerConstraint = new GridData(SWT.FILL, SWT.FILL, true, true);
 		viewerConstraint.minimumHeight = MINIMAL_GRID_HEIGHT;
-
-		trackViewer = new TableViewer(aParent,
-				SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
-		trackViewer.getControl().setLayoutData(viewerConstraint);
-		trackViewer.getTable().setHeaderVisible(true);
-		final TrackViewerComparator trackViewerComparator = new TrackViewerComparator();
-		trackViewer.setComparator(trackViewerComparator);
-		for (final String columnHeader : TRACK_VIEWER_COLUMNS) {
-			final TableViewerColumn viewerColumn = new TableViewerColumn(trackViewer, SWT.NONE);
-			final TableColumn column = viewerColumn.getColumn();
-			column.setWidth(100);
-			column.setText(columnHeader);
-			column.addSelectionListener(new SelectionAdapter() {
-				public void widgetSelected(final SelectionEvent aEvent) {
-					trackViewerComparator.setColumn(columnHeader);
-					trackViewer.getTable().setSortDirection(trackViewerComparator.getDirection());
-					trackViewer.getTable().setSortColumn(column);
-					trackViewer.refresh();
-				}
-			});
-		}
-		trackViewer.getControl().addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyReleased(final KeyEvent aEvent) {
-				if (aEvent.character == 0x01) {
-					trackViewer.setSelection(new StructuredSelection(tracksRepo.getTracks()));
-				}
-			}
-		});
-		bindTrackViewer();
-		addTrackViewerSelectionListener();
 
 		pictureViewer = new TableViewer(aParent,
 				SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
@@ -354,13 +321,44 @@ public class PositionAnnotationView {
 		bindPictureViewer();
 		addPictureViewerSelectionListener();
 
-		selectedTracksLabel = new Label(aParent, SWT.NONE);
-		selectedTracksLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		selectedTracksLabel.setText(String.format(TRACK_SELECTION_MSG, 0, 0));
+		trackViewer = new TableViewer(aParent,
+				SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
+		trackViewer.getControl().setLayoutData(viewerConstraint);
+		trackViewer.getTable().setHeaderVisible(true);
+		final TrackViewerComparator trackViewerComparator = new TrackViewerComparator();
+		trackViewer.setComparator(trackViewerComparator);
+		for (final String columnHeader : TRACK_VIEWER_COLUMNS) {
+			final TableViewerColumn viewerColumn = new TableViewerColumn(trackViewer, SWT.NONE);
+			final TableColumn column = viewerColumn.getColumn();
+			column.setWidth(100);
+			column.setText(columnHeader);
+			column.addSelectionListener(new SelectionAdapter() {
+				public void widgetSelected(final SelectionEvent aEvent) {
+					trackViewerComparator.setColumn(columnHeader);
+					trackViewer.getTable().setSortDirection(trackViewerComparator.getDirection());
+					trackViewer.getTable().setSortColumn(column);
+					trackViewer.refresh();
+				}
+			});
+		}
+		trackViewer.getControl().addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(final KeyEvent aEvent) {
+				if (aEvent.character == 0x01) {
+					trackViewer.setSelection(new StructuredSelection(tracksRepo.getTracks()));
+				}
+			}
+		});
+		bindTrackViewer();
+		addTrackViewerSelectionListener();
 
 		selectedPicturesLabel = new Label(aParent, SWT.NONE);
 		selectedPicturesLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		selectedPicturesLabel.setText(String.format(PICTURE_SELECTION_MSG, 0, 0));
+
+		selectedTracksLabel = new Label(aParent, SWT.NONE);
+		selectedTracksLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		selectedTracksLabel.setText(String.format(TRACK_SELECTION_MSG, 0, 0));
 
 		final Composite settingsPane = new Composite(aParent, SWT.BORDER);
 		final GridData settingsPaneLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
@@ -434,9 +432,8 @@ public class PositionAnnotationView {
 							+ StringUtils.join(failedPictures, "\n"));
 		}
 
-		final List<Path> reloadPictureFiles = new LinkedList<>();
-		annotatedPictures.forEach(picture -> reloadPictureFiles.add(picture.getFile()));
-
+		final List<Path> reloadPictureFiles  = annotatedPictures.stream().map(Picture::getFile).collect(Collectors.toList());
+		
 		annotatedPictures.clear();
 		annotatedPictureViewer.refresh();
 		nonAnnotatedPictures.clear();
@@ -444,7 +441,7 @@ public class PositionAnnotationView {
 		dirtyable.setDirty(false);
 		updateButtonStates();
 
-		OpenPicturesHandler.openPictures(reloadPictureFiles);
+		new PictureLoader().openPictures(reloadPictureFiles);
 	}
 
 	private int getTolerance(final int aScalePosition) {
@@ -495,18 +492,17 @@ public class PositionAnnotationView {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				logger.fine("Selected " + selection.size() + " tracks");
 
-				selectedTracks.clear();
-				selectedTracks.addAll(selection.toList());
+				selectedTracks = new TrackSelection(selection);
 
 				int positionSum = 0;
-				for (final Track track : selectedTracks) {
+				for (final Track track : selectedTracks.getSelection()) {
 					positionSum += track.getPositions().size();
 				}
 
 				updateButtonStates();
-				selectedTracksLabel.setText(String.format(TRACK_SELECTION_MSG, selectedTracks.size(), positionSum));
+				selectedTracksLabel.setText(String.format(TRACK_SELECTION_MSG, selectedTracks.getSelection().size(), positionSum));
 
-				selectionService.setSelection(new TrackSelection(selectedTracks));
+				selectionService.setSelection(selectedTracks);
 			}
 		});
 	}
@@ -517,11 +513,10 @@ public class PositionAnnotationView {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				logger.fine("Selected " + selection.size() + " pictures");
 
-				selectedPictures.clear();
-				selectedPictures.addAll(selection.toList());
+				selectedPictures = new PictureSelection(selection);
 
 				int picturesWithPositions = 0;
-				for (final Picture picture : selectedPictures) {
+				for (final Picture picture : selectedPictures.getSelection()) {
 					if (picture.getCoordinates() != null) {
 						picturesWithPositions++;
 					}
@@ -529,9 +524,9 @@ public class PositionAnnotationView {
 
 				updateButtonStates();
 				selectedPicturesLabel
-						.setText(String.format(PICTURE_SELECTION_MSG, selectedPictures.size(), picturesWithPositions));
+						.setText(String.format(PICTURE_SELECTION_MSG, selectedPictures.getSelection().size(), picturesWithPositions));
 
-				selectionService.setSelection(new PictureSelection(selectedPictures));
+				selectionService.setSelection(selectedPictures);
 			}
 		});
 	}
@@ -540,7 +535,7 @@ public class PositionAnnotationView {
 		annotationInProgress = true;
 		updateButtonStates();
 
-		logger.info("Starting annotation of " + selectedPictures.size() + " pictures using " + selectedTracks.size()
+		logger.info("Starting annotation of " + selectedPictures.getSelection().size() + " pictures using " + selectedTracks.getSelection().size()
 				+ " tracks...");
 
 		final int tolerance = getTolerance(toleranceScale.getSelection());
@@ -550,14 +545,15 @@ public class PositionAnnotationView {
 			@Override
 			protected IStatus run(final IProgressMonitor aMonitor) {
 				aMonitor.beginTask(
-						"Improving " + selectedPictures.size() + " pictures using " + selectedTracks.size() + " tracks",
+						"Improving " + selectedPictures.getSelection().size() + " pictures using " + selectedTracks.getSelection().size() + " tracks",
 						-1);
 
-				final PictureAnnotator annotator = new PictureAnnotator(selectedTracks, selectedPictures, tolerance,
+				final PictureAnnotator annotator = new PictureAnnotator(selectedTracks.getSelection(), selectedPictures.getSelection(), tolerance,
 						overwrite);
+				ContextInjectionFactory.inject(annotator, eclipseContext);
 				annotator.computeMatches();
 
-				logger.info("Annotating " + selectedPictures.size() + " pictures completed");
+				logger.info("Annotating " + selectedPictures.getSelection().size() + " pictures completed");
 
 				aMonitor.done();
 				annotationInProgress = false;
@@ -590,8 +586,8 @@ public class PositionAnnotationView {
 	}
 
 	private void updateButtonStates() {
-		computeAnnotationButton.setEnabled(!annotationInProgress && !dirtyable.isDirty() && selectedTracks.size() > 0
-				&& selectedPictures.size() > 0);
+		computeAnnotationButton.setEnabled(!annotationInProgress && !dirtyable.isDirty() && selectedTracks.getSelection().size() > 0
+				&& selectedPictures.getSelection().size() > 0);
 		saveAnnotationButton.setEnabled(!annotationInProgress && dirtyable.isDirty());
 		clearAnnotationButton.setEnabled(!annotationInProgress && dirtyable.isDirty());
 		trackViewer.getControl().setEnabled(!annotationInProgress);

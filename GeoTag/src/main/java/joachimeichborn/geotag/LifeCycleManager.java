@@ -44,7 +44,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.osgi.service.prefs.BackingStoreException;
 
 import joachimeichborn.geotag.io.database.DatabaseAccess;
-import joachimeichborn.geotag.io.database.DatabaseFactory;
 import joachimeichborn.geotag.logging.ConsoleAppender;
 import joachimeichborn.geotag.logging.ConsoleViewAppender;
 import joachimeichborn.geotag.logging.JoachimEichbornFilter;
@@ -53,28 +52,31 @@ import joachimeichborn.geotag.logging.ShortLogFormat;
 import joachimeichborn.geotag.ui.preferences.GeneralPreferences;
 
 public class LifeCycleManager {
+	private static final Logger LOGGER = Logger.getLogger(LifeCycleManager.class.getSimpleName());
+
 	public static final Path WORKING_DIR = Paths.get(System.getProperty("user.home"), ".geotag");
 	public static final String PREFERENCES_NODE = "joachimeichborn.geotag";
 	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
 
-	private static final Logger logger = Logger.getLogger(LifeCycleManager.class.getSimpleName());
+	private DatabaseAccess dbAccess;
 
 	@PostContextCreate
-	void postContextCreate(final IApplicationContext aAppContext, final Display aDisplay) {
+	void postContextCreate(final IApplicationContext aAppContext, final DatabaseAccess aDatabaseAccess,
+			final Display aDisplay, final ConsoleViewAppender aViewAppender) {
 		if (!Files.exists(WORKING_DIR)) {
 			try {
 				Files.createDirectories(WORKING_DIR);
 			} catch (IOException e) {
-				logger.log(Level.SEVERE, "Could not create working dir " + WORKING_DIR, e);
+				LOGGER.log(Level.SEVERE, "Could not create working dir " + WORKING_DIR, e);
 			}
 		}
-		
-		initializeLogging();
 
-		logger.fine("Starting up");
-		logger.fine("Working directory is " + WORKING_DIR);
-		// request database access to have it set up
-		DatabaseFactory.getDatabaseAccess();
+		initializeLogging(aViewAppender);
+
+		LOGGER.fine("Starting up");
+		LOGGER.fine("Working directory is " + WORKING_DIR);
+
+		dbAccess = aDatabaseAccess;
 
 		forceHookInFileDialogs();
 	}
@@ -100,11 +102,11 @@ public class LifeCycleManager {
 			useHook.set(new FileDialog(shell), true);
 			shell.dispose();
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-			logger.info("Could not enforce using callback hook for file dialogs: " + e.getMessage());
+			LOGGER.info("Could not enforce using callback hook for file dialogs: " + e.getMessage());
 		}
 	}
 
-	private void initializeLogging() {
+	private void initializeLogging(final ConsoleViewAppender aViewAppender) {
 		LogManager.getLogManager().reset();
 		final Logger rootLogger = Logger.getLogger("");
 		rootLogger.setLevel(Level.FINER);
@@ -124,33 +126,31 @@ public class LifeCycleManager {
 			fileAppender.setFilter(new JoachimEichbornFilter());
 			rootLogger.addHandler(fileAppender);
 		} catch (SecurityException | IOException e) {
-			logger.severe("Could not create log file: " + e.getMessage());
+			LOGGER.severe("Could not create log file: " + e.getMessage());
 		}
 
-		final ConsoleViewAppender viewAppender = ConsoleViewAppender.getInstance();
-		viewAppender.setFormatter(new ShortLogFormat());
-		viewAppender.setLevel(Level.INFO);
-		viewAppender.setFilter(new JoachimEichbornFilter());
-		rootLogger.addHandler(viewAppender);
+		aViewAppender.setFormatter(new ShortLogFormat());
+		aViewAppender.setLevel(Level.INFO);
+		aViewAppender.setFilter(new JoachimEichbornFilter());
+		rootLogger.addHandler(aViewAppender);
 	}
 
 	@PreSave
 	void preSave(
 			@Preference(nodePath = PREFERENCES_NODE, value = GeneralPreferences.DB_MAX_ENTRIES) final int aMaxEntries,
 			@Preference(nodePath = PREFERENCES_NODE) final IEclipsePreferences aPreferences) {
-		final DatabaseAccess database = DatabaseFactory.getDatabaseAccess();
-		database.trim(aMaxEntries);
-		database.close();
+		dbAccess.trim(aMaxEntries);
+		dbAccess.close();
 
 		try {
 			aPreferences.flush();
 		} catch (BackingStoreException e) {
-			logger.log(Level.SEVERE, "Could not save preferences: " + e.getMessage(), e);
+			LOGGER.log(Level.SEVERE, "Could not save preferences: " + e.getMessage(), e);
 		}
 
 		Job.getJobManager().cancel(null);
 
-		logger.info("Shuttdown completed");
+		LOGGER.info("Shutdown completed");
 		LogManager.getLogManager().reset();
 	}
 }

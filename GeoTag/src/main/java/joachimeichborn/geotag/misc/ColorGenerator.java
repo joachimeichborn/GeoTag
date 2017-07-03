@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package joachimeichborn.geotag.utils;
+package joachimeichborn.geotag.misc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ import org.eclipse.swt.graphics.RGB;
 public class ColorGenerator {
 	private static final ColorGenerator INSTANCE = new ColorGenerator();
 
-	private List<RGB> colors;
+	private final List<RGB> colors;
 	private int index = 0;
 
 	private ColorGenerator() {

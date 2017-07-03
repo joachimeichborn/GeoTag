@@ -77,6 +77,8 @@ import joachimeichborn.geotag.ui.preferences.MapPreferences;
 import net.miginfocom.swt.MigLayout;
 
 public class MapView {
+	private static final Logger LOGGER = Logger.getLogger(MapView.class.getSimpleName());
+
 	public static enum ZoomMode {
 		LATEST_SELECTION("Latest selection"), //
 		ALL_SELECTIONS("All selections");
@@ -124,19 +126,17 @@ public class MapView {
 		}
 	}
 
-	private static final Logger logger = Logger.getLogger(MapView.class.getSimpleName());
 	private static final String PART_ID = "geotag.part.map";
-
-	@Inject
-	private EPartService partService;
-
-	@Inject
-	private IEclipseContext eclipseContext;
 
 	@Inject
 	@Preference(nodePath = LifeCycleManager.PREFERENCES_NODE, value = MapPreferences.ZOOM_MODE)
 	private String zoomModeName;
 
+	private final EPartService partService;
+	private final TrackPainterHandler trackPlacemarks;
+	private final PicturePainterHandler picturePlacemarks;
+	private final PositionPainterHandler positionPlacemarks;
+	private final Set<GeoPosition> latestGeoPositions;
 	private Button showTrackPlacemarks;
 	private Button showTrackRoute;
 	private Button showTrackAccuracy;
@@ -146,16 +146,13 @@ public class MapView {
 	private Button showPositions;
 	private boolean visible;
 	private MPart mapPart;
-	private TrackPainterHandler trackPlacemarks;
-	private PicturePainterHandler picturePlacemarks;
-	private PositionPainterHandler positionPlacemarks;
-	private Set<GeoPosition> latestGeoPositions;
 
 	@Inject
-	public MapView() {
+	public MapView(final EPartService aPartService, final IEclipseContext aEclipseContext) {
+		partService = aPartService;
 		trackPlacemarks = new TrackPainterHandler(this);
 		picturePlacemarks = new PicturePainterHandler(this);
-		ContextInjectionFactory.inject(picturePlacemarks, eclipseContext);
+		ContextInjectionFactory.inject(picturePlacemarks, aEclipseContext);
 		positionPlacemarks = new PositionPainterHandler(this);
 		latestGeoPositions = new HashSet<>();
 	}
@@ -341,7 +338,7 @@ public class MapView {
 			mapViewer.zoomToBestFit(new HashSet<GeoPosition>(geoPositions), 0.7);
 		}
 		mapViewer.repaint();
-		logger.fine("Finished drawing " + latestGeoPositions.size() + " positions");
+		LOGGER.fine("Finished drawing " + latestGeoPositions.size() + " distinct positions");
 	}
 
 	public void setLatestGeoPositions(final Set<GeoPosition> aGeoPositions) {

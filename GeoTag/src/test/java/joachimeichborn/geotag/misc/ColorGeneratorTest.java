@@ -1,8 +1,10 @@
-package joachimeichborn.geotag.utils;
+package joachimeichborn.geotag.misc;
 
 import org.eclipse.swt.graphics.RGB;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import joachimeichborn.geotag.misc.ColorGenerator;
 
 public class ColorGeneratorTest {
 	@Test

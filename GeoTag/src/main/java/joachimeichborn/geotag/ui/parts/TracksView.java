@@ -63,27 +63,25 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableColumn;
 
+import joachimeichborn.geotag.misc.ColorPreviewImageGenerator;
 import joachimeichborn.geotag.model.Track;
 import joachimeichborn.geotag.model.TracksRepo;
 import joachimeichborn.geotag.model.selections.TrackSelection;
 import joachimeichborn.geotag.ui.labelprovider.TrackViewerObservableLabelProvider;
 import joachimeichborn.geotag.ui.tablecomparators.TrackViewerComparator;
-import joachimeichborn.geotag.utils.ColorPreviewImageGenerator;
 
 public class TracksView {
+	private static final Logger LOGGER = Logger.getLogger(TracksView.class.getSimpleName());
+
 	private static final String TRACKS_PART_ID = "geotag.part.tracks";
 
 	private static final String[] COLUMNS = new String[] { TrackViewerObservableLabelProvider.NAME_COLUMN,
 			TrackViewerObservableLabelProvider.POSITION_COUNT_COLUMN, TrackViewerObservableLabelProvider.COLOR_COLUMN };
 	private static final String SELECTED_TRACKS = "%d track(s) selected";
-	private static final Logger logger = Logger.getLogger(TracksView.class.getSimpleName());
 
-	@Inject
-	private ESelectionService selectionService;
-
-	@Inject
-	private EPartService partService;
-
+	private final ESelectionService selectionService;
+	private final EPartService partService;
+	private final TracksRepo tracksRepo;
 	private final ImageRegistry registry;
 	private TableViewer trackViewer;
 	private Label nameLabel;
@@ -92,13 +90,15 @@ public class TracksView {
 	private Label colorLabel;
 	private Composite colorContainer;
 	private ColorPreviewImageGenerator colorPreviewGenerator;
-	private final TracksRepo tracksRepo;
 
 	private Label selectedTracksLabel;
 
-	public TracksView() {
-		tracksRepo = TracksRepo.getInstance();
-
+	@Inject
+	public TracksView(final ESelectionService aSelectionService, final EPartService aPartService, final TracksRepo aTracksRepo) {
+		tracksRepo = aTracksRepo;
+		selectionService = aSelectionService;
+		partService = aPartService;
+	
 		final Display display = Display.getCurrent();
 		registry = new ImageRegistry(display);
 		colorPreviewGenerator = new ColorPreviewImageGenerator(registry, display);
@@ -119,7 +119,7 @@ public class TracksView {
 
 	@PreDestroy
 	public void dispose() {
-		logger.fine("Disposing track view registry");
+		LOGGER.fine("Disposing track view registry");
 		registry.dispose();
 	}
 
@@ -152,8 +152,9 @@ public class TracksView {
 						break;
 					}
 					case SWT.DEL: {
-						final List<Track> selectedTracks = trackViewer.getStructuredSelection().toList();
-						tracksRepo.removeTracks(selectedTracks);
+						final TrackSelection selectedTracks = new TrackSelection(trackViewer.getStructuredSelection());
+						trackViewer.setSelection(StructuredSelection.EMPTY);
+ 						tracksRepo.removeTracks(selectedTracks.getSelection());
 						break;
 					}
 				}
@@ -165,8 +166,8 @@ public class TracksView {
 		trackViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-				logger.fine("Selected " + selection.size() + " tracks");
-				final TrackSelection tracks = new TrackSelection(selection.toList());
+				LOGGER.fine("Selected " + selection.size() + " tracks");
+				final TrackSelection tracks = new TrackSelection(selection);
 				selectionService.setSelection(tracks);
 			}
 		});
@@ -229,21 +230,18 @@ public class TracksView {
 	}
 
 	private void selectTrackColor() {
-		final Object selection = selectionService.getSelection();
+		final TrackSelection selectedTracks = new TrackSelection(trackViewer.getStructuredSelection());
 
-		if (selection instanceof TrackSelection) {
-			final List<Track> trackList = ((TrackSelection) selection).getSelection();
-			if (trackList.size() == 1) {
-				final Shell shell = new Shell(Display.getCurrent());
-				final ColorDialog colorDialog = new ColorDialog(shell);
-				colorDialog.setRGB(trackList.get(0).getColor());
-				colorDialog.setText("Choose track color");
+		if (selectedTracks.getSelection().size() == 1) {
+			final Shell shell = new Shell(Display.getCurrent());
+			final ColorDialog colorDialog = new ColorDialog(shell);
+			colorDialog.setRGB(selectedTracks.getSelection().get(0).getColor());
+			colorDialog.setText("Choose track color");
 
-				final RGB rgb = colorDialog.open();
-				if (rgb != null) {
-					trackList.get(0).setColor(rgb);
-					selectionService.setSelection(new TrackSelection(trackList));
-				}
+			final RGB rgb = colorDialog.open();
+			if (rgb != null) {
+				selectedTracks.getSelection().get(0).setColor(rgb);
+				selectionService.setSelection(selectedTracks);
 			}
 		}
 	}
