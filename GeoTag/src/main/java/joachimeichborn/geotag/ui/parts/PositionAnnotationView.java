@@ -93,7 +93,7 @@ public class PositionAnnotationView {
 	private static final int MINIMAL_GRID_HEIGHT = 100;
 	private static final String NON_ANNOTATED_PICTURES_MSG = "%d pictures could not be mapped to a position";
 	private static final String ANNOTATED_PICTURES_MSG = "%d pictures successfully annotated";
-	private static final String PICTURE_SELECTION_MSG = "Selected %d pictures with %d position information";
+	private static final String PICTURE_SELECTION_MSG = "Selected %d pictures, %d of those already contain position information";
 	private static final String TRACK_SELECTION_MSG = "Selected %d tracks with %d positions";
 
 	private class AnnotationViewerSelectionListener implements ISelectionChangedListener {
@@ -284,42 +284,11 @@ public class PositionAnnotationView {
 	private void initializeUpperPane(final Composite aParent) {
 		aParent.setLayout(new GridLayout(2, false));
 
-		new Label(aParent, SWT.NONE).setText("Select tracks");
 		new Label(aParent, SWT.NONE).setText("Select Pictures");
+		new Label(aParent, SWT.NONE).setText("Select tracks");
 
 		final GridData viewerConstraint = new GridData(SWT.FILL, SWT.FILL, true, true);
 		viewerConstraint.minimumHeight = MINIMAL_GRID_HEIGHT;
-
-		trackViewer = new TableViewer(aParent,
-				SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
-		trackViewer.getControl().setLayoutData(viewerConstraint);
-		trackViewer.getTable().setHeaderVisible(true);
-		final TrackViewerComparator trackViewerComparator = new TrackViewerComparator();
-		trackViewer.setComparator(trackViewerComparator);
-		for (final String columnHeader : TRACK_VIEWER_COLUMNS) {
-			final TableViewerColumn viewerColumn = new TableViewerColumn(trackViewer, SWT.NONE);
-			final TableColumn column = viewerColumn.getColumn();
-			column.setWidth(100);
-			column.setText(columnHeader);
-			column.addSelectionListener(new SelectionAdapter() {
-				public void widgetSelected(final SelectionEvent aEvent) {
-					trackViewerComparator.setColumn(columnHeader);
-					trackViewer.getTable().setSortDirection(trackViewerComparator.getDirection());
-					trackViewer.getTable().setSortColumn(column);
-					trackViewer.refresh();
-				}
-			});
-		}
-		trackViewer.getControl().addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyReleased(final KeyEvent aEvent) {
-				if (aEvent.character == 0x01) {
-					trackViewer.setSelection(new StructuredSelection(tracksRepo.getTracks()));
-				}
-			}
-		});
-		bindTrackViewer();
-		addTrackViewerSelectionListener();
 
 		pictureViewer = new TableViewer(aParent,
 				SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
@@ -352,13 +321,44 @@ public class PositionAnnotationView {
 		bindPictureViewer();
 		addPictureViewerSelectionListener();
 
-		selectedTracksLabel = new Label(aParent, SWT.NONE);
-		selectedTracksLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		selectedTracksLabel.setText(String.format(TRACK_SELECTION_MSG, 0, 0));
+		trackViewer = new TableViewer(aParent,
+				SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
+		trackViewer.getControl().setLayoutData(viewerConstraint);
+		trackViewer.getTable().setHeaderVisible(true);
+		final TrackViewerComparator trackViewerComparator = new TrackViewerComparator();
+		trackViewer.setComparator(trackViewerComparator);
+		for (final String columnHeader : TRACK_VIEWER_COLUMNS) {
+			final TableViewerColumn viewerColumn = new TableViewerColumn(trackViewer, SWT.NONE);
+			final TableColumn column = viewerColumn.getColumn();
+			column.setWidth(100);
+			column.setText(columnHeader);
+			column.addSelectionListener(new SelectionAdapter() {
+				public void widgetSelected(final SelectionEvent aEvent) {
+					trackViewerComparator.setColumn(columnHeader);
+					trackViewer.getTable().setSortDirection(trackViewerComparator.getDirection());
+					trackViewer.getTable().setSortColumn(column);
+					trackViewer.refresh();
+				}
+			});
+		}
+		trackViewer.getControl().addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(final KeyEvent aEvent) {
+				if (aEvent.character == 0x01) {
+					trackViewer.setSelection(new StructuredSelection(tracksRepo.getTracks()));
+				}
+			}
+		});
+		bindTrackViewer();
+		addTrackViewerSelectionListener();
 
 		selectedPicturesLabel = new Label(aParent, SWT.NONE);
 		selectedPicturesLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		selectedPicturesLabel.setText(String.format(PICTURE_SELECTION_MSG, 0, 0));
+
+		selectedTracksLabel = new Label(aParent, SWT.NONE);
+		selectedTracksLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		selectedTracksLabel.setText(String.format(TRACK_SELECTION_MSG, 0, 0));
 
 		final Composite settingsPane = new Composite(aParent, SWT.BORDER);
 		final GridData settingsPaneLayoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
