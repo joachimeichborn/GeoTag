@@ -156,21 +156,12 @@ public class PicturePainterHandler extends AbstractPainterHandler<Picture>implem
 
 	@Override
 	public void previewReady(PreviewKey aKey, BufferedImage aImage) {
-		boolean correctImage = false;
-		final boolean current = requestedImages.remove(aKey.getFile());
-
-		// check whether the image that was computed is still of use
-		if (current) {
-			if (Math.max(aImage.getWidth(), aImage.getHeight()) == (int) (DIMENSION_FACTOR * LONGER_DIMENSION)) {
-				previewRepo.getPreview(aKey, true, this);
-				requestedImages.add(aKey.getFile());
-			} else {
-				correctImage = true;
-			}
-		}
-
-		if (correctImage) {
-			requestRepaint();
+		// check whether we still have an interest in the previously requested image
+		if (requestedImages.contains(aKey.getFile())) {
+			if (Math.max(aImage.getWidth(), aImage.getHeight()) == LONGER_DIMENSION) {
+				requestedImages.remove(aKey.getFile());
+				requestRepaint();
+			} 
 		}
 	}
 

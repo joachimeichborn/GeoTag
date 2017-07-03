@@ -36,35 +36,32 @@ import org.eclipse.e4.core.di.annotations.Creatable;
 @Creatable
 @Singleton
 public class PicturesRepo implements PropertyChangeListener {
-	private static final Logger logger = Logger.getLogger(PicturesRepo.class.getSimpleName());
+	private static final Logger LOGGER = Logger.getLogger(PicturesRepo.class.getSimpleName());
+	
 	public static final String PICTURES_PROPERTY = "pictures";
 
 	private final Map<String, Picture> pictures;
 	private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
 	public PicturesRepo() {
-		logger.fine("Constructing pictures repo");
+		LOGGER.fine("Constructing pictures repo");
 		
 		pictures = Collections.synchronizedMap(new LinkedHashMap<>());
 	}
 
 	public void addPicture(final Picture aPicture) {
-		logger.fine("Adding " + aPicture.getFile() + " to picture storage");
-		synchronized (pictures) {
-			pictures.put(aPicture.getFile().toString(), aPicture);
-		}
+		LOGGER.fine("Adding " + aPicture.getFile() + " to picture storage");
+
+		pictures.put(aPicture.getFile().toString(), aPicture);
+
 		propertyChangeSupport.firePropertyChange(PICTURES_PROPERTY, null, null);
 	}
 
 	public void removePictures(final List<Picture> aPicturesToRemove) {
-		logger.fine("Removing " + aPicturesToRemove + " pictures from picture storage");
+		LOGGER.fine("Removing " + aPicturesToRemove + " pictures from picture storage");
 		for (final Picture picture : aPicturesToRemove) {
-			final Picture removedPicture;
-			synchronized(pictures) {
-				removedPicture = pictures.remove(picture.getFile().toString());
-			}
-			if (removedPicture == null) {
-				logger.fine("Could not remove picture " + picture);
+			if (pictures.remove(picture.getFile().toString()) == null) {
+				LOGGER.fine("Could not remove picture " + picture);
 			}
 		}
 		propertyChangeSupport.firePropertyChange(PICTURES_PROPERTY, null, null);

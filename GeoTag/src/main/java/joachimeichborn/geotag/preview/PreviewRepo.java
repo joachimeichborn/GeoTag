@@ -124,8 +124,15 @@ public class PreviewRepo implements PreviewConsumer {
 
 		entry = dbAccess.getPreviewAnySize(aCacheKey.getFile());
 		if (entry != null) {
-			final float widthFactor = aCacheKey.getWidth() / (float) entry.getWidth();
-			final float heightFactor = aCacheKey.getHeight() / (float) entry.getHeight();
+			final float widthFactor;
+			final float heightFactor;
+			if (aRotatable && entry.getHeight() > entry.getWidth()) {
+				widthFactor = aCacheKey.getHeight() / (float) entry.getWidth();
+				heightFactor = aCacheKey.getWidth() / (float) entry.getHeight();
+			} else {
+				widthFactor = aCacheKey.getWidth() / (float) entry.getWidth();
+				heightFactor = aCacheKey.getHeight() / (float) entry.getHeight();
+			}
 
 			final float factor = Math.min(widthFactor, heightFactor);
 
