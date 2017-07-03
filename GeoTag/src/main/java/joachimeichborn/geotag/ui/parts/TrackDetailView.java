@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package joachimeichborn.geotag.ui.parts;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -120,7 +119,7 @@ public class TrackDetailView {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				logger.fine("Selected " + selection.size() + " positions");
-				final PositionSelection positions = new PositionSelection(selection.toList());
+				final PositionSelection positions = new PositionSelection(selection);
 				selectionService.setSelection(positions);
 			}
 		});
@@ -158,7 +157,7 @@ public class TrackDetailView {
 				positionsViewer.refresh();
 			}
 			
-			final PositionSelection positions = new PositionSelection(Collections.emptyList());
+			final PositionSelection positions = new PositionSelection();
 			selectionService.setSelection(positions);
 		}
 	}

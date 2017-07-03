@@ -43,7 +43,7 @@ public class GeneralPreferences extends PreferencePage {
 	private static final Pattern POSITIVE_INTEGER = Pattern.compile("^[1-9]\\d*$");
 	private static final String TITLE = "General";
 	private static final boolean DO_BACKUP_FALLBACK = true;
-	private static final int MAX_ENTRIES_FALLBACK = 10_000;
+	private static final int MAX_ENTRIES_FALLBACK = 20_000;
 
 	private final IEclipsePreferences preferences;
 	private final IEclipsePreferences defaultPreferences;

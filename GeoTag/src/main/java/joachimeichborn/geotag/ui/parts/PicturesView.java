@@ -152,8 +152,8 @@ public class PicturesView implements PreviewConsumer {
 						break;
 					}
 					case SWT.DEL: {
-						final List<Picture> selectedPictures = pictureViewer.getStructuredSelection().toList();
-						picturesRepo.removePictures(selectedPictures);
+						final PictureSelection selectedPictures = new PictureSelection(pictureViewer.getStructuredSelection());
+						picturesRepo.removePictures(selectedPictures.getSelection());
 						break;
 					}
 				}
@@ -166,7 +166,7 @@ public class PicturesView implements PreviewConsumer {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				logger.fine("Selected " + selection.size() + " pictures");
-				final PictureSelection pictures = new PictureSelection(selection.toList());
+				final PictureSelection pictures = new PictureSelection(selection);
 				selectionService.setSelection(pictures);
 			}
 		});
@@ -198,11 +198,11 @@ public class PicturesView implements PreviewConsumer {
 		preview = new ImageIcon();
 		previewLabel = new JLabel(preview);
 		previewContainer = new Composite(details, SWT.EMBEDDED);
-		final GridData previewGridData = new GridData();
-		previewGridData.verticalSpan = 7;
-		previewGridData.heightHint = 160;
-		previewGridData.widthHint = 160;
-		previewContainer.setLayoutData(previewGridData);
+		final GridData thumbnailGridData = new GridData();
+		thumbnailGridData.verticalSpan = 7;
+		thumbnailGridData.heightHint = 160;
+		thumbnailGridData.widthHint = 160;
+		previewContainer.setLayoutData(thumbnailGridData);
 		final Frame frame = SWT_AWT.new_Frame(previewContainer);
 		frame.add(previewLabel);
 		final Color color = details.getBackground();

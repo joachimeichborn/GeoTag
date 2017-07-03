@@ -71,7 +71,6 @@ import org.eclipse.swt.widgets.TableColumn;
 import joachimeichborn.geotag.handlers.OpenTracksHandler;
 import joachimeichborn.geotag.io.TrackFileFormat;
 import joachimeichborn.geotag.io.writer.TrackWriter;
-import joachimeichborn.geotag.io.writer.kml.KmlWriter;
 import joachimeichborn.geotag.model.Track;
 import joachimeichborn.geotag.model.TracksRepo;
 import joachimeichborn.geotag.model.selections.TrackSelection;
@@ -101,7 +100,7 @@ public class TrackImprovementView {
 	private Button removeIrrelevantPositions;
 	private Button interpolatePositions;
 	private Button refineButton;
-	private final LinkedList<Track> selectedTracks;
+	private TrackSelection selectedTracks;
 	private final LinkedList<Track> inputTracks;
 	protected Track refinedTrack;
 	private Button showRefinedOnMap;
@@ -120,7 +119,7 @@ public class TrackImprovementView {
 	private static UISynchronize sync;
 
 	public TrackImprovementView() {
-		selectedTracks = new LinkedList<>();
+		selectedTracks = new TrackSelection();
 		inputTracks = new LinkedList<>();
 
 		final Display display = Display.getCurrent();
@@ -166,7 +165,7 @@ public class TrackImprovementView {
 		showRefinedOnMap.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent aEvent) {
-				final List<Track> tracks = new LinkedList<>(selectedTracks);
+				final List<Track> tracks = new LinkedList<>(selectedTracks.getSelection());
 				if (showRefinedOnMap.getSelection()) {
 					tracks.add(refinedTrack);
 				}
@@ -247,7 +246,7 @@ public class TrackImprovementView {
 		updateButtonStates();
 
 		inputTracks.clear();
-		inputTracks.addAll(selectedTracks);
+		inputTracks.addAll(selectedTracks.getSelection());
 
 		logger.info("Starting improvement for " + inputTracks.size() + " tracks...");
 
@@ -350,12 +349,11 @@ public class TrackImprovementView {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				logger.fine("Selected " + selection.size() + " tracks");
 
-				selectedTracks.clear();
-				selectedTracks.addAll(selection.toList());
+				selectedTracks = new TrackSelection(selection);
 
 				updateButtonStates();
 
-				final List<Track> extendedSelection = new LinkedList<>(selectedTracks);
+				final List<Track> extendedSelection = new LinkedList<>(selectedTracks.getSelection());
 				if (refinedTrack != null && showRefinedOnMap.getSelection()) {
 					extendedSelection.add(refinedTrack);
 				}
@@ -445,10 +443,10 @@ public class TrackImprovementView {
 	}
 
 	private void updateButtonStates() {
-		refineButton.setEnabled(!improvementInProgress && !dirtyable.isDirty() && selectedTracks.size() > 0);
+		refineButton.setEnabled(!improvementInProgress && !dirtyable.isDirty() && selectedTracks.getSelection().size() > 0);
 		showRefinedOnMap.setEnabled(!improvementInProgress && dirtyable.isDirty());
 		saveRefinedTrack.setEnabled(!improvementInProgress && dirtyable.isDirty());
-		discardRefinedTrack.setEnabled(!improvementInProgress);
+		discardRefinedTrack.setEnabled(!improvementInProgress && dirtyable.isDirty());
 		removeDuplicates.setEnabled(!improvementInProgress);
 		filterByPairwiseDistance.setEnabled(!improvementInProgress);
 		distanceFactorScale.setEnabled(!improvementInProgress);

@@ -101,7 +101,7 @@ public class PositionAnnotationView {
 		public void selectionChanged(final SelectionChangedEvent event) {
 			final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 			logger.fine("Selected " + selection.size() + " pictures");
-			selectionService.setSelection(new PictureSelection(selection.toList()));
+			selectionService.setSelection(new PictureSelection(selection));
 		}
 	}
 
@@ -125,8 +125,8 @@ public class PositionAnnotationView {
 
 	private TableViewer trackViewer;
 	private TableViewer pictureViewer;
-	private final List<Track> selectedTracks;
-	private final List<Picture> selectedPictures;
+	private TrackSelection selectedTracks;
+	private PictureSelection selectedPictures;
 	private Label selectedTracksLabel;
 	private Label selectedPicturesLabel;
 	private Button computeAnnotationButton;
@@ -148,8 +148,8 @@ public class PositionAnnotationView {
 	private boolean annotationInProgress;
 
 	public PositionAnnotationView() {
-		selectedTracks = new LinkedList<>();
-		selectedPictures = new LinkedList<>();
+		selectedTracks = new TrackSelection();
+		selectedPictures = new PictureSelection();
 
 		final Display display = Display.getCurrent();
 		registry = new ImageRegistry(display);
@@ -495,18 +495,17 @@ public class PositionAnnotationView {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				logger.fine("Selected " + selection.size() + " tracks");
 
-				selectedTracks.clear();
-				selectedTracks.addAll(selection.toList());
+				selectedTracks = new TrackSelection(selection);
 
 				int positionSum = 0;
-				for (final Track track : selectedTracks) {
+				for (final Track track : selectedTracks.getSelection()) {
 					positionSum += track.getPositions().size();
 				}
 
 				updateButtonStates();
-				selectedTracksLabel.setText(String.format(TRACK_SELECTION_MSG, selectedTracks.size(), positionSum));
+				selectedTracksLabel.setText(String.format(TRACK_SELECTION_MSG, selectedTracks.getSelection().size(), positionSum));
 
-				selectionService.setSelection(new TrackSelection(selectedTracks));
+				selectionService.setSelection(selectedTracks);
 			}
 		});
 	}
@@ -517,11 +516,10 @@ public class PositionAnnotationView {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				logger.fine("Selected " + selection.size() + " pictures");
 
-				selectedPictures.clear();
-				selectedPictures.addAll(selection.toList());
+				selectedPictures = new PictureSelection(selection);
 
 				int picturesWithPositions = 0;
-				for (final Picture picture : selectedPictures) {
+				for (final Picture picture : selectedPictures.getSelection()) {
 					if (picture.getCoordinates() != null) {
 						picturesWithPositions++;
 					}
@@ -529,9 +527,9 @@ public class PositionAnnotationView {
 
 				updateButtonStates();
 				selectedPicturesLabel
-						.setText(String.format(PICTURE_SELECTION_MSG, selectedPictures.size(), picturesWithPositions));
+						.setText(String.format(PICTURE_SELECTION_MSG, selectedPictures.getSelection().size(), picturesWithPositions));
 
-				selectionService.setSelection(new PictureSelection(selectedPictures));
+				selectionService.setSelection(selectedPictures);
 			}
 		});
 	}
@@ -540,7 +538,7 @@ public class PositionAnnotationView {
 		annotationInProgress = true;
 		updateButtonStates();
 
-		logger.info("Starting annotation of " + selectedPictures.size() + " pictures using " + selectedTracks.size()
+		logger.info("Starting annotation of " + selectedPictures.getSelection().size() + " pictures using " + selectedTracks.getSelection().size()
 				+ " tracks...");
 
 		final int tolerance = getTolerance(toleranceScale.getSelection());
@@ -550,14 +548,14 @@ public class PositionAnnotationView {
 			@Override
 			protected IStatus run(final IProgressMonitor aMonitor) {
 				aMonitor.beginTask(
-						"Improving " + selectedPictures.size() + " pictures using " + selectedTracks.size() + " tracks",
+						"Improving " + selectedPictures.getSelection().size() + " pictures using " + selectedTracks.getSelection().size() + " tracks",
 						-1);
 
-				final PictureAnnotator annotator = new PictureAnnotator(selectedTracks, selectedPictures, tolerance,
+				final PictureAnnotator annotator = new PictureAnnotator(selectedTracks.getSelection(), selectedPictures.getSelection(), tolerance,
 						overwrite);
 				annotator.computeMatches();
 
-				logger.info("Annotating " + selectedPictures.size() + " pictures completed");
+				logger.info("Annotating " + selectedPictures.getSelection().size() + " pictures completed");
 
 				aMonitor.done();
 				annotationInProgress = false;
@@ -590,8 +588,8 @@ public class PositionAnnotationView {
 	}
 
 	private void updateButtonStates() {
-		computeAnnotationButton.setEnabled(!annotationInProgress && !dirtyable.isDirty() && selectedTracks.size() > 0
-				&& selectedPictures.size() > 0);
+		computeAnnotationButton.setEnabled(!annotationInProgress && !dirtyable.isDirty() && selectedTracks.getSelection().size() > 0
+				&& selectedPictures.getSelection().size() > 0);
 		saveAnnotationButton.setEnabled(!annotationInProgress && dirtyable.isDirty());
 		clearAnnotationButton.setEnabled(!annotationInProgress && dirtyable.isDirty());
 		trackViewer.getControl().setEnabled(!annotationInProgress);

@@ -152,8 +152,8 @@ public class TracksView {
 						break;
 					}
 					case SWT.DEL: {
-						final List<Track> selectedTracks = trackViewer.getStructuredSelection().toList();
-						tracksRepo.removeTracks(selectedTracks);
+						final TrackSelection selectedTracks = new TrackSelection(trackViewer.getStructuredSelection());
+						tracksRepo.removeTracks(selectedTracks.getSelection());
 						break;
 					}
 				}
@@ -166,7 +166,7 @@ public class TracksView {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				logger.fine("Selected " + selection.size() + " tracks");
-				final TrackSelection tracks = new TrackSelection(selection.toList());
+				final TrackSelection tracks = new TrackSelection(selection);
 				selectionService.setSelection(tracks);
 			}
 		});
@@ -229,21 +229,18 @@ public class TracksView {
 	}
 
 	private void selectTrackColor() {
-		final Object selection = selectionService.getSelection();
+		final TrackSelection selectedTracks = new TrackSelection(trackViewer.getStructuredSelection());
 
-		if (selection instanceof TrackSelection) {
-			final List<Track> trackList = ((TrackSelection) selection).getSelection();
-			if (trackList.size() == 1) {
-				final Shell shell = new Shell(Display.getCurrent());
-				final ColorDialog colorDialog = new ColorDialog(shell);
-				colorDialog.setRGB(trackList.get(0).getColor());
-				colorDialog.setText("Choose track color");
+		if (selectedTracks.getSelection().size() == 1) {
+			final Shell shell = new Shell(Display.getCurrent());
+			final ColorDialog colorDialog = new ColorDialog(shell);
+			colorDialog.setRGB(selectedTracks.getSelection().get(0).getColor());
+			colorDialog.setText("Choose track color");
 
-				final RGB rgb = colorDialog.open();
-				if (rgb != null) {
-					trackList.get(0).setColor(rgb);
-					selectionService.setSelection(new TrackSelection(trackList));
-				}
+			final RGB rgb = colorDialog.open();
+			if (rgb != null) {
+				selectedTracks.getSelection().get(0).setColor(rgb);
+				selectionService.setSelection(selectedTracks);
 			}
 		}
 	}

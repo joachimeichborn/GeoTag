@@ -119,7 +119,7 @@ public class GeocodingView {
 	private TableViewer inputPictureViewer;
 	private TableViewer geocodedPictureViewer;
 	private Button geocodeButton;
-	private final List<Picture> selectedPictures;
+	private PictureSelection selectedPictures;
 	private List<Picture> geocodedPictures;
 	private Label selectedPicturesLabel;
 	private Button overwriteButton;
@@ -133,7 +133,7 @@ public class GeocodingView {
 
 	public GeocodingView() {
 		picturesRepo = PicturesRepo.getInstance();
-		selectedPictures = new LinkedList<>();
+		selectedPictures = new PictureSelection();
 		geocodedPictures = new LinkedList<>();
 		nonGeocodedPictures = new LinkedList<>();
 	}
@@ -266,7 +266,7 @@ public class GeocodingView {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				logger.fine("Selected " + selection.size() + " pictures");
-				final PictureSelection pictures = new PictureSelection(selection.toList());
+				final PictureSelection pictures = new PictureSelection(selection);
 				selectionService.setSelection(pictures);
 			}
 		});
@@ -315,7 +315,7 @@ public class GeocodingView {
 	}
 
 	private void updateButtonStates() {
-		geocodeButton.setEnabled(!geocodingInProgress && !dirtyable.isDirty() && selectedPictures.size() > 0);
+		geocodeButton.setEnabled(!geocodingInProgress && !dirtyable.isDirty() && selectedPictures.getSelection().size() > 0);
 		saveGeocodingButton.setEnabled(!geocodingInProgress && dirtyable.isDirty());
 		clearGeocodingButton.setEnabled(!geocodingInProgress && dirtyable.isDirty());
 		inputPictureViewer.getControl().setEnabled(!geocodingInProgress);
@@ -362,21 +362,19 @@ public class GeocodingView {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				logger.fine("Selected " + selection.size() + " pictures");
 
-				selectedPictures.clear();
-				selectedPictures.addAll(selection.toList());
+				selectedPictures = new PictureSelection(selection);
 
 				int withGeocoding = 0;
-				for (final Picture picture : selectedPictures) {
+				for (final Picture picture : selectedPictures.getSelection()) {
 					if (picture.getGeocoding() != null) {
 						withGeocoding++;
 					}
 				}
 
-				selectedPicturesLabel
-						.setText(String.format(PICTURE_SELECTION_MSG, selectedPictures.size(), withGeocoding));
+				selectedPicturesLabel.setText(String.format(PICTURE_SELECTION_MSG, selectedPictures.getSelection().size(), withGeocoding));
 				updateButtonStates();
 
-				selectionService.setSelection(new PictureSelection(selectedPictures));
+				selectionService.setSelection(selectedPictures);
 			}
 		});
 
@@ -438,7 +436,7 @@ public class GeocodingView {
 		geocodingInProgress = true;
 		updateButtonStates();
 
-		logger.info("Starting geocoding for " + selectedPictures.size() + " pictures...");
+		logger.info("Starting geocoding for " + selectedPictures.getSelection().size() + " pictures...");
 
 		final boolean overwrite = overwriteButton.getSelection();
 		final GeocodingProvider provider = GeocodingProvider.getByDisplayName(aGeocodingProviderName);
@@ -448,9 +446,9 @@ public class GeocodingView {
 		final Job job = new Job("Geocoding pictures") {
 			@Override
 			protected IStatus run(final IProgressMonitor aMonitor) {
-				aMonitor.beginTask("Geocoding " + selectedPictures.size() + " pictures", selectedPictures.size());
+				aMonitor.beginTask("Geocoding " + selectedPictures.getSelection().size() + " pictures", selectedPictures.getSelection().size());
 
-				for (final Picture picture : selectedPictures) {
+				for (final Picture picture : selectedPictures.getSelection()) {
 					if (picture.getGeocoding() != null && !overwrite) {
 						logger.fine("Ignoring picture " + picture.getFile().toString() + " with existing geocoding");
 						nonGeocodedPictures.add(picture);
@@ -468,7 +466,7 @@ public class GeocodingView {
 					aMonitor.worked(1);
 				}
 
-				logger.info("Geocoding " + selectedPictures.size() + " pictures completed");
+				logger.info("Geocoding " + selectedPictures.getSelection().size() + " pictures completed");
 
 				aMonitor.done();
 				geocodingInProgress = false;
@@ -532,7 +530,7 @@ public class GeocodingView {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				logger.fine("Selected " + selection.size() + " pictures");
-				final PictureSelection pictures = new PictureSelection(selection.toList());
+				final PictureSelection pictures = new PictureSelection(selection);
 				selectionService.setSelection(pictures);
 			}
 		});

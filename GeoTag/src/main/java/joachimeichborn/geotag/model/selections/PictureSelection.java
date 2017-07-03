@@ -19,22 +19,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package joachimeichborn.geotag.model.selections;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.eclipse.jface.viewers.IStructuredSelection;
 
 import joachimeichborn.geotag.model.Picture;
 
 public class PictureSelection implements Selection<Picture> {
 	private List<Picture> selection;
 
-	public PictureSelection(final List<Picture> aSelection) {
-		selection = new ArrayList<>(aSelection);
+	public PictureSelection() {
+		selection = Collections.emptyList();
+	}
+
+	@SuppressWarnings("unchecked")
+	public PictureSelection(final IStructuredSelection aSelection) {
+		selection = Collections.unmodifiableList((List<Picture>) aSelection.toList());
 	}
 
 	@Override
 	public List<Picture> getSelection() {
-		return Collections.unmodifiableList(selection);
+		return selection;
 	}
 
 }
