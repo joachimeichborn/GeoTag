@@ -82,17 +82,19 @@ import joachimeichborn.geotag.ui.tablecomparators.TrackViewerComparator;
 import net.miginfocom.swt.MigLayout;
 
 public class TrackImprovementView {
+	private static final Logger LOGGER = Logger.getLogger(TrackImprovementView.class.getSimpleName());
+	
 	private static final String[] COLUMNS = new String[] { TrackViewerObservableLabelProvider.NAME_COLUMN,
 			TrackViewerObservableLabelProvider.POSITION_COUNT_COLUMN, TrackViewerObservableLabelProvider.COLOR_COLUMN };
-	private static final Logger logger = Logger.getLogger(TrackImprovementView.class.getSimpleName());
 	private static final String INDENT_LEFT = "20";
 
-	@Inject
-	private ESelectionService selectionService;
-
-	@Inject
-	private MDirtyable dirtyable;
-
+	private final ESelectionService selectionService;
+	private final MDirtyable dirtyable;
+	private final TracksRepo tracksRepo;
+	private final UISynchronize sync;
+	private final LinkedList<Track> inputTracks;
+	private final ImageRegistry registry;
+	private final ColorPreviewImageGenerator colorPreviewGenerator;
 	private Button removeDuplicates;
 	private Button filterByPairwiseDistance;
 	private Button replaceByAccuracyComparison;
@@ -101,7 +103,6 @@ public class TrackImprovementView {
 	private Button interpolatePositions;
 	private Button refineButton;
 	private TrackSelection selectedTracks;
-	private final LinkedList<Track> inputTracks;
 	protected Track refinedTrack;
 	private Button showRefinedOnMap;
 	private Button saveRefinedTrack;
@@ -110,23 +111,20 @@ public class TrackImprovementView {
 	private Scale radiusThresholdScale;
 	private Scale distanceFactorScale;
 	private TableViewer trackViewer;
-	private final ImageRegistry registry;
-	private final ColorPreviewImageGenerator colorPreviewGenerator;
-	private final TracksRepo tracksRepo;
 	private boolean improvementInProgress;
-
+	
 	@Inject
-	private static UISynchronize sync;
-
-	public TrackImprovementView() {
+	public TrackImprovementView(final ESelectionService aSelectionService, final MDirtyable aDirtyable, final TracksRepo aTracksRepo, final UISynchronize aSync) {
+		selectionService = aSelectionService;
+		dirtyable = aDirtyable;
+		tracksRepo = aTracksRepo;
+		sync = aSync;
 		selectedTracks = new TrackSelection();
 		inputTracks = new LinkedList<>();
 
 		final Display display = Display.getCurrent();
 		registry = new ImageRegistry(display);
 		colorPreviewGenerator = new ColorPreviewImageGenerator(registry, display);
-
-		tracksRepo = TracksRepo.getInstance();
 	}
 
 	@PostConstruct
@@ -248,7 +246,7 @@ public class TrackImprovementView {
 		inputTracks.clear();
 		inputTracks.addAll(selectedTracks.getSelection());
 
-		logger.info("Starting improvement for " + inputTracks.size() + " tracks...");
+		LOGGER.info("Starting improvement for " + inputTracks.size() + " tracks...");
 
 		final Job job = new Job("Improving tracks") {
 			@Override
@@ -258,7 +256,7 @@ public class TrackImprovementView {
 				final TrackRefiner refiner = new TrackRefiner(builder.build(), inputTracks);
 				refinedTrack = refiner.refine();
 
-				logger.info("Improving " + inputTracks.size() + " tracks completed");
+				LOGGER.info("Improving " + inputTracks.size() + " tracks completed");
 
 				aMonitor.done();
 				improvementInProgress = false;
@@ -310,17 +308,17 @@ public class TrackImprovementView {
 			try {
 				writer.write(refinedTrack, file.toPath());
 			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Failed to write refined track: " + e.getMessage(), e);
+				LOGGER.log(Level.SEVERE, "Failed to write refined track: " + e.getMessage(), e);
 				return;
 			}
 
-			logger.info("Saved refined track to " + file.getPath());
+			LOGGER.info("Saved refined track to " + file.getPath());
 			refinedTrack = null;
 			inputTracks.clear();
 			dirtyable.setDirty(false);
 			updateButtonStates();
 
-			OpenTracksHandler.openTracks(file.getParent(), new String[] { file.getName() });
+			OpenTracksHandler.openTracks(file.getParent(), new String[] { file.getName() }, tracksRepo);
 		}
 	}
 
@@ -347,7 +345,7 @@ public class TrackImprovementView {
 		trackViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-				logger.fine("Selected " + selection.size() + " tracks");
+				LOGGER.fine("Selected " + selection.size() + " tracks");
 
 				selectedTracks = new TrackSelection(selection);
 

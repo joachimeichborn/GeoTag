@@ -40,11 +40,13 @@ import net.miginfocom.swt.MigLayout;
 public class ProgressView {
 	private static class ProgressMonitor extends NullProgressMonitor {
 		private final Composite parent;
+		private final UISynchronize sync;
 		Composite entry;
 		ProgressBar progressBar;
 
-		public ProgressMonitor(final Composite aParent) {
+		public ProgressMonitor(final Composite aParent, final UISynchronize aSync) {
 			parent = aParent;
+			sync = aSync;
 		}
 
 		@Override
@@ -88,7 +90,7 @@ public class ProgressView {
 		}
 	}
 
-	private static UISynchronize sync;
+	private final UISynchronize sync;
 
 	@Inject
 	public ProgressView(final UISynchronize aSync) {
@@ -103,7 +105,7 @@ public class ProgressView {
 		Job.getJobManager().setProgressProvider(new ProgressProvider() {
 			@Override
 			public IProgressMonitor createMonitor(final Job aJob) {
-				return new ProgressMonitor(aParent);
+				return new ProgressMonitor(aParent, sync);
 			}
 		});
 	}

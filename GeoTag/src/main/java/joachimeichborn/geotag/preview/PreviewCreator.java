@@ -119,6 +119,7 @@ public class PreviewCreator {
 				break;
 			}
 
+			//TODO: shouldn't be an observer given here waiting for the complete picture if necessary?
 			g.drawImage(preview, BORDER_SIZE, BORDER_SIZE, scaledDim.getWidth() - BORDER_SIZE,
 					scaledDim.getHeight() - BORDER_SIZE, 0, 0, scaledDim.getWidth() - 2 * BORDER_SIZE,
 					scaledDim.getHeight() - 2 * BORDER_SIZE, Color.BLACK, null);

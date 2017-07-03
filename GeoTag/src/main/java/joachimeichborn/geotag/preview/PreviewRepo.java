@@ -27,7 +27,10 @@ import java.util.Collection;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
+import org.eclipse.e4.core.di.annotations.Creatable;
 import org.jxmapviewer.util.GraphicsUtilities;
 
 import com.google.common.collect.HashMultimap;
@@ -35,39 +38,40 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
 import joachimeichborn.geotag.io.database.DatabaseAccess;
-import joachimeichborn.geotag.io.database.DatabaseFactory;
 
 /**
  * Repo organizing the picture previews.
  * 
  * @author Joachim von Eichborn
  */
+@Creatable
+@Singleton
 public class PreviewRepo implements PreviewConsumer {
-	private static final Logger logger = Logger.getLogger(PreviewRepo.class.getSimpleName());
+	private static final Logger LOGGER = Logger.getLogger(PreviewRepo.class.getSimpleName());
 	private static final String PREVIEW_PLACEHOLDER_IMAGE = "preview_placeholder.png";
-	private static final PreviewRepo INSTANCE = new PreviewRepo();
-	private DatabaseAccess database;
-
-	private Multimap<PreviewKey, PreviewConsumer> requestedImages;
-
-	BufferedImage placeholder;
+	
+	private final DatabaseAccess dbAccess;
 	private final PreviewCreator previewCreator;
 
-	private PreviewRepo() {
-		previewCreator = new PreviewCreator(this);
+	private Multimap<PreviewKey, PreviewConsumer> requestedImages;
+	final BufferedImage placeholder;
+
+	@Inject
+	public PreviewRepo(final DatabaseAccess aDbAccess) {
+		LOGGER.fine("Constructing preview repo");
+		
+		dbAccess = aDbAccess;
 		requestedImages = Multimaps.synchronizedMultimap(HashMultimap.create());
+		previewCreator = new PreviewCreator(this);
 
-		placeholder = null;
+		BufferedImage placeholderTmp = null;
 		try {
-			placeholder = ImageIO.read(PreviewRepo.class.getResource(PREVIEW_PLACEHOLDER_IMAGE));
+			placeholderTmp = ImageIO.read(PreviewRepo.class.getResource(PREVIEW_PLACEHOLDER_IMAGE));
 		} catch (IOException | IllegalArgumentException e) {
-			logger.severe("Could not load preview placeholder: " + e.getMessage());
-			placeholder = new BufferedImage(100, 75, BufferedImage.TYPE_INT_RGB);
+			LOGGER.severe("Could not load preview placeholder: " + e.getMessage());
+			placeholderTmp = new BufferedImage(100, 75, BufferedImage.TYPE_INT_RGB);
 		}
-	}
-
-	public static PreviewRepo getInstance() {
-		return INSTANCE;
+		placeholder = placeholderTmp;
 	}
 
 	/**
@@ -80,21 +84,20 @@ public class PreviewRepo implements PreviewConsumer {
 	 * @param aConsumer
 	 * @return
 	 */
-	public BufferedImage getPreview(final PreviewKey aCacheKey, final boolean aRotatable,
-			final PreviewConsumer aConsumer) {
-		BufferedImage entry = getDatabase().getPreview(aCacheKey);
+	public BufferedImage getPreview(final PreviewKey aCacheKey, final boolean aRotatable, final PreviewConsumer aConsumer) {
+		BufferedImage entry = dbAccess.getPreview(aCacheKey);
 
 		if (entry != null) {
-			logger.fine("Fetched preview using key " + aCacheKey);
+			LOGGER.fine("Fetched preview using key " + aCacheKey);
 			return entry;
 		}
 
 		final PreviewKey rotatedKey = PreviewKey.getRotatedKey(aCacheKey);
 
 		if (aRotatable) {
-			entry = getDatabase().getPreview(rotatedKey);
+			entry = dbAccess.getPreview(rotatedKey);
 			if (entry != null && entry.getWidth() < entry.getHeight()) {
-				logger.fine("Fetched preview using rotated key " + rotatedKey);
+				LOGGER.fine("Fetched preview using rotated key " + rotatedKey);
 				return entry;
 			}
 		}
@@ -102,37 +105,37 @@ public class PreviewRepo implements PreviewConsumer {
 		synchronized (requestedImages) {
 			if (requestedImages.containsKey(aCacheKey)) {
 				if (!requestedImages.get(aCacheKey).contains(aConsumer)) {
-					logger.fine("Adding consumer for key " + aCacheKey + ": " + aConsumer);
+					LOGGER.fine("Adding consumer for key " + aCacheKey + ": " + aConsumer);
 					requestedImages.put(aCacheKey, aConsumer);
 				}
 			} else if (aRotatable && requestedImages.containsKey(rotatedKey)) {
 				if (!requestedImages.get(rotatedKey).contains(aConsumer)) {
-					logger.fine("Adding consumer for rotated key" + rotatedKey + ": " + aConsumer);
+					LOGGER.fine("Adding consumer for rotated key" + rotatedKey + ": " + aConsumer);
 					requestedImages.put(rotatedKey, aConsumer);
 				}
 			} else {
-				logger.fine("Adding consumer for " + aCacheKey + ": " + aConsumer);
+				LOGGER.fine("Adding consumer for " + aCacheKey + ": " + aConsumer);
 				requestedImages.put(aCacheKey, aConsumer);
 
-				logger.fine("Requesting preview for " + aCacheKey);
+				LOGGER.fine("Requesting preview for " + aCacheKey);
 				previewCreator.requestPreview(aCacheKey, aRotatable);
 			}
 		}
 
-		entry = getDatabase().getPreviewAnySize(aCacheKey.getFile());
+		entry = dbAccess.getPreviewAnySize(aCacheKey.getFile());
 		if (entry != null) {
 			final float widthFactor = aCacheKey.getWidth() / (float) entry.getWidth();
 			final float heightFactor = aCacheKey.getHeight() / (float) entry.getHeight();
 
 			final float factor = Math.min(widthFactor, heightFactor);
 
-			logger.fine("Fetched preview with incorrect size using file" + aCacheKey.getFile());
+			LOGGER.fine("Fetched preview with incorrect size using file" + aCacheKey.getFile());
 			return createPreview(entry, (int) (entry.getWidth() * factor), (int) (entry.getHeight() * factor));
 		}
 
 		return placeholder;
 	}
-	
+
 	private BufferedImage createPreview(final BufferedImage aImage, final int aWidth, int aHeight) {
 		final BufferedImage temp = GraphicsUtilities.createCompatibleImage(aImage, aWidth, aHeight);
 		final Graphics2D g2 = temp.createGraphics();
@@ -155,7 +158,7 @@ public class PreviewRepo implements PreviewConsumer {
 	 */
 	@Override
 	public void previewReady(final PreviewKey aKey, final BufferedImage aImage) {
-		getDatabase().savePreview(aKey, aImage);
+		dbAccess.savePreview(aKey, aImage);
 
 		final Collection<PreviewConsumer> consumers;
 		synchronized (requestedImages) {
@@ -165,22 +168,5 @@ public class PreviewRepo implements PreviewConsumer {
 		for (final PreviewConsumer consumer : consumers) {
 			consumer.previewReady(aKey, aImage);
 		}
-	}
-
-	private DatabaseAccess getDatabase() {
-		if (database == null) {
-			database = DatabaseFactory.getDatabaseAccess();
-		}
-
-		return database;
-	}
-
-	/**
-	 * Hack to mock database access as long as dependency injection is not used
-	 * 
-	 * @param aDatabaseAccess
-	 */
-	void setDatabase(final DatabaseAccess aDatabaseAccess) {
-		database = aDatabaseAccess;
 	}
 }

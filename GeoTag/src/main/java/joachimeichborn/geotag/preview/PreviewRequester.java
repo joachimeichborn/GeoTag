@@ -22,8 +22,9 @@ package joachimeichborn.geotag.preview;
 import java.awt.image.BufferedImage;
 import java.util.logging.Logger;
 
+import javax.inject.Inject;
+
 import joachimeichborn.geotag.io.database.DatabaseAccess;
-import joachimeichborn.geotag.io.database.DatabaseFactory;
 
 /**
  * Checks for a given {@link PreviewKey}, if any preview for that file exist -
@@ -35,22 +36,23 @@ import joachimeichborn.geotag.io.database.DatabaseFactory;
  * @author Joachim von Eichborn
  */
 public class PreviewRequester implements PreviewConsumer {
-	private static final Logger logger = Logger.getLogger(PreviewRequester.class.getSimpleName());
-	private DatabaseAccess database;
+	private static final Logger LOGGER = Logger.getLogger(PreviewRequester.class.getSimpleName());
+	private final DatabaseAccess dbAccess;
 
 	private final PreviewCreator previewCreator;
 
-	public PreviewRequester() {
+	@Inject
+	public PreviewRequester(final DatabaseAccess aDbAccess) {
+		dbAccess = aDbAccess;
 		previewCreator = new PreviewCreator(this);
-		database = DatabaseFactory.getDatabaseAccess();
 	}
 
 	public void triggerPreviewCreation(final PreviewKey aCacheKey) {
-		if (database.doesPreviewExist(aCacheKey.getFile())) {
+		if (dbAccess.doesPreviewExist(aCacheKey.getFile())) {
 			return;
 		}
 
-		logger.fine("Triggering preview creation for " + aCacheKey);
+		LOGGER.fine("Triggering preview creation for " + aCacheKey);
 		previewCreator.requestPreview(aCacheKey, true);
 	}
 
@@ -60,6 +62,6 @@ public class PreviewRequester implements PreviewConsumer {
 	 */
 	@Override
 	public void previewReady(final PreviewKey aKey, final BufferedImage aImage) {
-		database.savePreview(aKey, aImage);
+		dbAccess.savePreview(aKey, aImage);
 	}
 }

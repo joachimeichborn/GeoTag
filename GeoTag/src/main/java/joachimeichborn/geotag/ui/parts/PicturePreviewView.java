@@ -51,19 +51,19 @@ public class PicturePreviewView implements PreviewConsumer {
 	private static final String PART_ID = "geotag.part.picturepreview";
 
 	private final PreviewRepo previewRepo;
+	private final EPartService partService;
 	private ImageIcon preview;
 	private JLabel previewLabel;
 	private Composite previewContainer;
 	private MPart previewPart;
 	private boolean visible;
-
-	@Inject
-	private EPartService partService;
-
 	private Path lastFile;
 
-	public PicturePreviewView() {
-		previewRepo = PreviewRepo.getInstance();
+	@Inject
+	public PicturePreviewView(final PreviewRepo aPreviewRepo, final EPartService aPartService) {
+		previewRepo = aPreviewRepo;
+		partService = aPartService;
+		
 		visible = false;
 	}
 

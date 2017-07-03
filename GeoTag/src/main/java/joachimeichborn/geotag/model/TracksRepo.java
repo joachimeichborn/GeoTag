@@ -29,21 +29,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+
+import javax.inject.Singleton;
+
+import org.eclipse.e4.core.di.annotations.Creatable;
+
+@Creatable
+@Singleton
 public class TracksRepo implements PropertyChangeListener {
 	public static final String TRACKS_PROPERTY = "tracks";
 
-	private static final TracksRepo INSTANCE = new TracksRepo();
 	private static final Logger logger = Logger.getLogger(TracksRepo.class.getSimpleName());
 
 	private final Map<String, Track> tracks;
 	private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
-	private TracksRepo() {
+	public TracksRepo() {
+		logger.fine("Constructing tracks repo");
+		
 		tracks = Collections.synchronizedMap(new LinkedHashMap<>());
-	}
-
-	public static TracksRepo getInstance() {
-		return INSTANCE;
 	}
 
 	public void addTrack(final Track aTrack) {

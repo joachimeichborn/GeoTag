@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -70,7 +71,7 @@ import org.eclipse.swt.widgets.Scale;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableColumn;
 
-import joachimeichborn.geotag.handlers.OpenPicturesHandler;
+import joachimeichborn.geotag.handlers.PictureLoader;
 import joachimeichborn.geotag.io.jpeg.PictureAnnotationException;
 import joachimeichborn.geotag.io.jpeg.PictureMetadataWriter;
 import joachimeichborn.geotag.misc.ColorPreviewImageGenerator;
@@ -111,18 +112,10 @@ public class PositionAnnotationView {
 	private static final String[] PICTURE_VIEWER_COLUMNS = new String[] { PictureViewerLabelProvider.NAME_COLUMN,
 			PictureViewerLabelProvider.TIME_COLUMN, PictureViewerLabelProvider.COORDINATES_COLUMN };
 
-	@Inject
-	private ESelectionService selectionService;
-
-	@Inject
-	private IEclipseContext eclipseContext;
-
-	@Inject
-	private MDirtyable dirtyable;
-
-	@Inject
-	private static UISynchronize sync;
-
+	private final ESelectionService selectionService;
+	private final IEclipseContext eclipseContext;
+	private final MDirtyable dirtyable;
+	private final UISynchronize sync;
 	private TableViewer trackViewer;
 	private TableViewer pictureViewer;
 	private TrackSelection selectedTracks;
@@ -147,16 +140,21 @@ public class PositionAnnotationView {
 	private final TracksRepo tracksRepo;
 	private boolean annotationInProgress;
 
-	public PositionAnnotationView() {
+	@Inject
+	public PositionAnnotationView(final TracksRepo aTracksRepo, final PicturesRepo aPicturesRepo, final ESelectionService aSelectionService, final IEclipseContext aEclipseContext, final MDirtyable aDirtyable, final UISynchronize aSync) {
+		tracksRepo = aTracksRepo;
+		picturesRepo = aPicturesRepo;
+		selectionService = aSelectionService;
+		eclipseContext = aEclipseContext;
+		dirtyable = aDirtyable;
+		sync = aSync;
+		
 		selectedTracks = new TrackSelection();
 		selectedPictures = new PictureSelection();
 
 		final Display display = Display.getCurrent();
 		registry = new ImageRegistry(display);
 		colorPreviewGenerator = new ColorPreviewImageGenerator(registry, display);
-
-		tracksRepo = TracksRepo.getInstance();
-		picturesRepo = PicturesRepo.getInstance();
 	}
 
 	@PostConstruct
@@ -434,9 +432,8 @@ public class PositionAnnotationView {
 							+ StringUtils.join(failedPictures, "\n"));
 		}
 
-		final List<Path> reloadPictureFiles = new LinkedList<>();
-		annotatedPictures.forEach(picture -> reloadPictureFiles.add(picture.getFile()));
-
+		final List<Path> reloadPictureFiles  = annotatedPictures.stream().map(Picture::getFile).collect(Collectors.toList());
+		
 		annotatedPictures.clear();
 		annotatedPictureViewer.refresh();
 		nonAnnotatedPictures.clear();
@@ -444,7 +441,7 @@ public class PositionAnnotationView {
 		dirtyable.setDirty(false);
 		updateButtonStates();
 
-		OpenPicturesHandler.openPictures(reloadPictureFiles);
+		new PictureLoader().openPictures(reloadPictureFiles);
 	}
 
 	private int getTolerance(final int aScalePosition) {
@@ -553,6 +550,7 @@ public class PositionAnnotationView {
 
 				final PictureAnnotator annotator = new PictureAnnotator(selectedTracks.getSelection(), selectedPictures.getSelection(), tolerance,
 						overwrite);
+				ContextInjectionFactory.inject(annotator, eclipseContext);
 				annotator.computeMatches();
 
 				logger.info("Annotating " + selectedPictures.getSelection().size() + " pictures completed");

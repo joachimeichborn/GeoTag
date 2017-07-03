@@ -34,9 +34,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
+import javax.inject.Singleton;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.eclipse.e4.core.di.annotations.Creatable;
 
+import joachimeichborn.geotag.LifeCycleManager;
 import joachimeichborn.geotag.io.database.TableModel.Preview;
 import joachimeichborn.geotag.preview.PreviewKey;
 
@@ -45,7 +48,11 @@ import joachimeichborn.geotag.preview.PreviewKey;
  * 
  * @author Joachim von Eichborn
  */
-class DerbyDatabase implements DatabaseAccess {
+@Creatable
+@Singleton
+public class DerbyDatabase implements DatabaseAccess {
+	private static final String DERBY_DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
+	
 	private static final String CREATE_PREVIEW_TABLE = "CREATE TABLE " + Preview.TABLE_NAME + " (" + //
 			Preview.ID_COLUMN + " INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), " + //
 			Preview.FILE_NAME_COLUMN + " VARCHAR(5000) NOT NULL, " + //
@@ -80,8 +87,9 @@ class DerbyDatabase implements DatabaseAccess {
 	private Connection readConnection;
 	private Connection writeConnection;
 
-	public DerbyDatabase(final String aDriver, final String aUrl) {
-		establishConnection(aDriver, aUrl);
+	public DerbyDatabase() {
+		final String url = "jdbc:derby:" + LifeCycleManager.WORKING_DIR.resolve("database").toString() + ";create=true";
+		establishConnection(DERBY_DRIVER, url);
 
 		final Set<String> tableNames = getAllTables();
 
@@ -249,10 +257,10 @@ class DerbyDatabase implements DatabaseAccess {
 			logger.log(Level.SEVERE, "Error while getting maximal preview id", aEx);
 		}
 
-		if (maxId > 0L) {
-			long minSurvivingEntryId = maxId - aPreviewEntries;
-			logger.finer("Maximal preview id is " + maxId + ", thus deleting all entries with ids lower than " + minSurvivingEntryId);
+		long minSurvivingEntryId = Math.max(maxId - aPreviewEntries, 0L);
+		logger.finer("Maximal preview id is " + maxId + ", thus deleting all entries with ids lower than " + minSurvivingEntryId);
 
+		if (minSurvivingEntryId > 0L) {
 			try {
 				synchronized (writeConnection) {
 					try (final PreparedStatement statement = writeConnection.prepareStatement(TRIM_PREVIEW_TABLE_QUERY)) {

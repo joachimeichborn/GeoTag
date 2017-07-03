@@ -14,6 +14,10 @@ import org.testng.annotations.Test;
 import com.google.common.io.Files;
 
 import joachimeichborn.geotag.io.database.DatabaseAccess;
+import joachimeichborn.geotag.preview.PreviewConsumer;
+import joachimeichborn.geotag.preview.PreviewCreator;
+import joachimeichborn.geotag.preview.PreviewKey;
+import joachimeichborn.geotag.preview.PreviewRepo;
 
 public class PreviewRepoTest {
 	@Test
@@ -74,8 +78,7 @@ public class PreviewRepoTest {
 			}
 		};
 
-		final PreviewRepo repo = PreviewRepo.getInstance();
-		repo.setDatabase(database);
+		final PreviewRepo repo = new PreviewRepo(database);
 
 		// using the return value, we can see if an existing preview has been
 		// used (in that case an image not equal to the placeholder is returned)

@@ -71,19 +71,17 @@ import joachimeichborn.geotag.ui.labelprovider.TrackViewerObservableLabelProvide
 import joachimeichborn.geotag.ui.tablecomparators.TrackViewerComparator;
 
 public class TracksView {
+	private static final Logger LOGGER = Logger.getLogger(TracksView.class.getSimpleName());
+
 	private static final String TRACKS_PART_ID = "geotag.part.tracks";
 
 	private static final String[] COLUMNS = new String[] { TrackViewerObservableLabelProvider.NAME_COLUMN,
 			TrackViewerObservableLabelProvider.POSITION_COUNT_COLUMN, TrackViewerObservableLabelProvider.COLOR_COLUMN };
 	private static final String SELECTED_TRACKS = "%d track(s) selected";
-	private static final Logger logger = Logger.getLogger(TracksView.class.getSimpleName());
 
-	@Inject
-	private ESelectionService selectionService;
-
-	@Inject
-	private EPartService partService;
-
+	private final ESelectionService selectionService;
+	private final EPartService partService;
+	private final TracksRepo tracksRepo;
 	private final ImageRegistry registry;
 	private TableViewer trackViewer;
 	private Label nameLabel;
@@ -92,13 +90,15 @@ public class TracksView {
 	private Label colorLabel;
 	private Composite colorContainer;
 	private ColorPreviewImageGenerator colorPreviewGenerator;
-	private final TracksRepo tracksRepo;
 
 	private Label selectedTracksLabel;
 
-	public TracksView() {
-		tracksRepo = TracksRepo.getInstance();
-
+	@Inject
+	public TracksView(final ESelectionService aSelectionService, final EPartService aPartService, final TracksRepo aTracksRepo) {
+		tracksRepo = aTracksRepo;
+		selectionService = aSelectionService;
+		partService = aPartService;
+	
 		final Display display = Display.getCurrent();
 		registry = new ImageRegistry(display);
 		colorPreviewGenerator = new ColorPreviewImageGenerator(registry, display);
@@ -119,7 +119,7 @@ public class TracksView {
 
 	@PreDestroy
 	public void dispose() {
-		logger.fine("Disposing track view registry");
+		LOGGER.fine("Disposing track view registry");
 		registry.dispose();
 	}
 
@@ -165,7 +165,7 @@ public class TracksView {
 		trackViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-				logger.fine("Selected " + selection.size() + " tracks");
+				LOGGER.fine("Selected " + selection.size() + " tracks");
 				final TrackSelection tracks = new TrackSelection(selection);
 				selectionService.setSelection(tracks);
 			}

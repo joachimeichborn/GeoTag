@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -38,8 +39,8 @@ public class PictureAnnotator {
 	private static final DateTimeFormatter utcDateFormatter = DateTimeFormat.forPattern("yyyy:MM:dd HH:mm:ss")
 			.withOffsetParsed().withZoneUTC();
 
-	private final List<PositionData> positions;
 	private final List<Picture> pictures;
+	private final LinkedList<Track> tracks;
 	private int tolerance;
 	private boolean overwrite;
 	private List<Picture> annotatedPictures;
@@ -55,15 +56,17 @@ public class PictureAnnotator {
 	public PictureAnnotator(final List<Track> aTracks, final List<Picture> aPictures, final int aTolerance,
 			final boolean aOverwrite) {
 		pictures = new LinkedList<>(aPictures);
+		tracks = new LinkedList<>(aTracks);
 		tolerance = aTolerance;
 		overwrite = aOverwrite;
 
-		positions = getAllPositions(aTracks);
 		annotatedPictures = new LinkedList<>();
 		nonAnnotatedPictures = new LinkedList<>();
 	}
 	
 	public void computeMatches() {
+		final List<PositionData> positions = tracks.stream().flatMap(t -> t.getPositions().stream()).sorted().collect(Collectors.toCollection(ArrayList::new));
+
 		logger.fine("Annotating " + pictures.size() + " pictures with " + positions.size() + " positions, tolerance "
 				+ tolerance + " minutes and overwrite " + overwrite);
 		
@@ -100,18 +103,6 @@ public class PictureAnnotator {
 
 		logger.fine("Annotated " + annotatedPictures.size() + " pictures, skipped " + nonAnnotatedPictures.size()
 				+ " pictures");
-	}
-
-	private List<PositionData> getAllPositions(final List<Track> aTracks) {
-		final List<PositionData> positionData = new ArrayList<>();
-
-		for (final Track track : aTracks) {
-			positionData.addAll(track.getPositions());
-		}
-
-		Collections.sort(positionData);
-
-		return positionData;
 	}
 
 	private void filterPicturesWithPosition() {

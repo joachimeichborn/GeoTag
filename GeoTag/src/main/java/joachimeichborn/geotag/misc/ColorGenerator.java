@@ -32,7 +32,7 @@ import org.eclipse.swt.graphics.RGB;
 public class ColorGenerator {
 	private static final ColorGenerator INSTANCE = new ColorGenerator();
 
-	private List<RGB> colors;
+	private final List<RGB> colors;
 	private int index = 0;
 
 	private ColorGenerator() {

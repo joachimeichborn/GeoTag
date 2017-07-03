@@ -26,24 +26,23 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.SimpleFormatter;
 
+import javax.inject.Singleton;
+
+import org.eclipse.e4.core.di.annotations.Creatable;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Display;
 
+@Creatable
+@Singleton
 public class ConsoleViewAppender extends Handler {
-	private static final ConsoleViewAppender INSTANCE = new ConsoleViewAppender();
-
 	private StyledText console;
 	private Display display;
 	private final List<LogRecord> records;
 
-	private ConsoleViewAppender() {
+	public ConsoleViewAppender() {
 		records = new LinkedList<>();
-	}
-
-	public static ConsoleViewAppender getInstance() {
-		return INSTANCE;
 	}
 
 	/**

@@ -82,15 +82,11 @@ public class PicturesView implements PreviewConsumer {
 	private static final String SELECTED_PICTURES = "%d picture(s) selected";
 	private static final Logger logger = Logger.getLogger(PicturesView.class.getSimpleName());
 
-	@Inject
-	private ESelectionService selectionService;
-
-	@Inject
-	private EPartService partService;
-
+	private final ESelectionService selectionService;
+	private final EPartService partService;
+	private final PreviewRepo previewRepo;
 	private TableViewer pictureViewer;
-	private PicturesRepo picturesRepo;
-	private PreviewRepo previewRepo;
+	private final PicturesRepo picturesRepo;
 	private Label nameLabel;
 	private Label pathLabel;
 	private Composite previewContainer;
@@ -104,9 +100,12 @@ public class PicturesView implements PreviewConsumer {
 	private PreviewKey lastKey;
 	private Label selectedPicturesLabel;
 
-	public PicturesView() {
-		picturesRepo = PicturesRepo.getInstance();
-		previewRepo = PreviewRepo.getInstance();
+	@Inject
+	public PicturesView(final PicturesRepo aPicturesRepo, final PreviewRepo aPreviewRepo, final EPartService aPartService, final ESelectionService aSelectionService) {
+ 		picturesRepo = aPicturesRepo;
+		previewRepo = aPreviewRepo;
+		partService = aPartService;
+		selectionService = aSelectionService;
 	}
 
 	@PostConstruct

@@ -73,7 +73,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import joachimeichborn.geotag.LifeCycleManager;
 import joachimeichborn.geotag.geocode.Geocoder;
 import joachimeichborn.geotag.geocode.GeocodingProvider;
-import joachimeichborn.geotag.handlers.OpenPicturesHandler;
+import joachimeichborn.geotag.handlers.PictureLoader;
 import joachimeichborn.geotag.io.jpeg.PictureAnnotationException;
 import joachimeichborn.geotag.io.jpeg.PictureMetadataWriter;
 import joachimeichborn.geotag.model.Geocoding;
@@ -86,7 +86,8 @@ import joachimeichborn.geotag.ui.preferences.GeocodingPreferences;
 import joachimeichborn.geotag.ui.tablecomparators.PictureViewerComparator;
 
 public class GeocodingView {
-	private static final Logger logger = Logger.getLogger(GeocodingView.class.getSimpleName());
+	private static final Logger LOGGER = Logger.getLogger(GeocodingView.class.getSimpleName());
+	
 	private static final int MINIMAL_GRID_HEIGHT = 100;
 	private static final String PICTURE_SELECTION_MSG = "Selected %d pictures, %d of them already contain geocoding information";
 	private static final String GEOCODED_PICTURES_MSG = "%d pictures successfully geocoded";
@@ -100,21 +101,13 @@ public class GeocodingView {
 			PictureViewerLabelProvider.TIME_COLUMN, PictureViewerLabelProvider.COORDINATES_COLUMN };
 
 	@Inject
-	private ESelectionService selectionService;
-
-	@Inject
-	private MDirtyable dirtyable;
-
-	@Inject
-	private IEclipseContext eclipseContext;
-
-	@Inject
-	private static UISynchronize sync;
-
-	@Inject
 	@Preference(nodePath = LifeCycleManager.PREFERENCES_NODE, value = GeocodingPreferences.GEOCODING_PROVIDER)
 	private String aGeocodingProviderName;
 
+	private final ESelectionService selectionService;
+	private final MDirtyable dirtyable;
+	private final IEclipseContext eclipseContext;
+	private final UISynchronize sync;
 	private final PicturesRepo picturesRepo;
 	private TableViewer inputPictureViewer;
 	private TableViewer geocodedPictureViewer;
@@ -131,8 +124,14 @@ public class GeocodingView {
 	private Label nonGeocodedPicturesLabel;
 	private boolean geocodingInProgress;
 
-	public GeocodingView() {
-		picturesRepo = PicturesRepo.getInstance();
+	@Inject
+	public GeocodingView(final PicturesRepo aPicturesRepo, final UISynchronize aSync, final IEclipseContext aEclipseContext, final MDirtyable aDirtyable, final ESelectionService aSelectionService) {
+ 		picturesRepo = aPicturesRepo;
+		sync = aSync;
+		eclipseContext = aEclipseContext;
+		dirtyable = aDirtyable;
+		selectionService = aSelectionService;
+
 		selectedPictures = new PictureSelection();
 		geocodedPictures = new LinkedList<>();
 		nonGeocodedPictures = new LinkedList<>();
@@ -265,7 +264,7 @@ public class GeocodingView {
 		nonGeocodedPictureViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-				logger.fine("Selected " + selection.size() + " pictures");
+				LOGGER.fine("Selected " + selection.size() + " pictures");
 				final PictureSelection pictures = new PictureSelection(selection);
 				selectionService.setSelection(pictures);
 			}
@@ -274,7 +273,7 @@ public class GeocodingView {
 
 	@Persist
 	public void savePictureGeocoding() {
-		logger.info("Writing " + geocodedPictures.size() + " picture geocodings");
+		LOGGER.info("Writing " + geocodedPictures.size() + " picture geocodings");
 
 		final List<Path> failedPictures = new LinkedList<>();
 
@@ -285,13 +284,13 @@ public class GeocodingView {
 			try {
 				metadataWriter.writeGeocodingMetadata();
 			} catch (PictureAnnotationException e) {
-				logger.log(Level.SEVERE, "Annotating geocoding for " + picture.getFile() + " failed: " + e.getMessage(),
+				LOGGER.log(Level.SEVERE, "Annotating geocoding for " + picture.getFile() + " failed: " + e.getMessage(),
 						e);
 				failedPictures.add(picture.getFile());
 			}
 		}
 
-		logger.info("Finished writing picture geocodings");
+		LOGGER.info("Finished writing picture geocodings");
 
 		if (!failedPictures.isEmpty()) {
 			MessageDialog.openError(new Shell(Display.getCurrent()),
@@ -311,7 +310,9 @@ public class GeocodingView {
 		dirtyable.setDirty(false);
 		updateButtonStates();
 
-		OpenPicturesHandler.openPictures(reloadPictureFiles);
+		final PictureLoader pictureLoader = new PictureLoader();
+		ContextInjectionFactory.inject(pictureLoader, eclipseContext);
+		pictureLoader.openPictures(reloadPictureFiles);
 	}
 
 	private void updateButtonStates() {
@@ -360,7 +361,7 @@ public class GeocodingView {
 		inputPictureViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-				logger.fine("Selected " + selection.size() + " pictures");
+				LOGGER.fine("Selected " + selection.size() + " pictures");
 
 				selectedPictures = new PictureSelection(selection);
 
@@ -436,11 +437,11 @@ public class GeocodingView {
 		geocodingInProgress = true;
 		updateButtonStates();
 
-		logger.info("Starting geocoding for " + selectedPictures.getSelection().size() + " pictures...");
+		LOGGER.info("Starting geocoding for " + selectedPictures.getSelection().size() + " pictures...");
 
 		final boolean overwrite = overwriteButton.getSelection();
 		final GeocodingProvider provider = GeocodingProvider.getByDisplayName(aGeocodingProviderName);
-		logger.info("Using " + provider.getDisplayName() + " as geocoding provider");
+		LOGGER.info("Using " + provider.getDisplayName() + " as geocoding provider");
 		final Geocoder geoCoder = provider.getGeocoder();
 
 		final Job job = new Job("Geocoding pictures") {
@@ -450,7 +451,7 @@ public class GeocodingView {
 
 				for (final Picture picture : selectedPictures.getSelection()) {
 					if (picture.getGeocoding() != null && !overwrite) {
-						logger.fine("Ignoring picture " + picture.getFile().toString() + " with existing geocoding");
+						LOGGER.fine("Ignoring picture " + picture.getFile().toString() + " with existing geocoding");
 						nonGeocodedPictures.add(picture);
 					} else {
 						final Geocoding geocoding = geoCoder.queryPosition(picture.getCoordinates());
@@ -466,7 +467,7 @@ public class GeocodingView {
 					aMonitor.worked(1);
 				}
 
-				logger.info("Geocoding " + selectedPictures.getSelection().size() + " pictures completed");
+				LOGGER.info("Geocoding " + selectedPictures.getSelection().size() + " pictures completed");
 
 				aMonitor.done();
 				geocodingInProgress = false;
@@ -529,7 +530,7 @@ public class GeocodingView {
 		geocodedPictureViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(final SelectionChangedEvent event) {
 				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-				logger.fine("Selected " + selection.size() + " pictures");
+				LOGGER.fine("Selected " + selection.size() + " pictures");
 				final PictureSelection pictures = new PictureSelection(selection);
 				selectionService.setSelection(pictures);
 			}
